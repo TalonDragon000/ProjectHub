@@ -315,7 +315,7 @@ export default function Home() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
               <Users className="w-6 h-6 text-blue-600" />
-              <h2 className="text-3xl font-bold text-slate-900">Browse by Creator</h2>
+              <h2 className="text-3xl font-bold text-slate-900">Featured Creators</h2>
             </div>
           </div>
           <p className="text-slate-600 mb-8">Discover talented builders and their projects</p>
