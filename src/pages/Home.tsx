@@ -13,6 +13,8 @@ export default function Home() {
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [newestProjects, setNewestProjects] = useState<Project[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [categoryProjects, setCategoryProjects] = useState<Project[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -21,7 +23,12 @@ export default function Home() {
   useEffect(() => {
     loadFeaturedProjects();
     loadNewestProjects();
+    loadCategoryProjects();
   }, []);
+
+  useEffect(() => {
+    loadCategoryProjects();
+  }, [selectedCategory]);
 
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
@@ -66,6 +73,23 @@ export default function Home() {
       setSearchResults(data);
       setShowResults(true);
     }
+  };
+
+  const loadCategoryProjects = async () => {
+    setCategoryLoading(true);
+    let query = supabase
+      .from('projects')
+      .select('*')
+      .eq('is_published', true);
+
+    if (selectedCategory !== 'all') {
+      query = query.eq('category', selectedCategory);
+    }
+
+    const { data } = await query.order('average_rating', { ascending: false }).limit(12);
+
+    if (data) setCategoryProjects(data);
+    setCategoryLoading(false);
   };
 
   const handleProjectClick = (slug: string) => {
@@ -194,6 +218,69 @@ export default function Home() {
               </button>
             ))}
           </div>
+
+          {categoryLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 animate-pulse">
+                  <div className="h-48 bg-slate-200"></div>
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 bg-slate-200 rounded w-1/3"></div>
+                    <div className="h-6 bg-slate-200 rounded w-2/3"></div>
+                    <div className="h-4 bg-slate-200 rounded w-full"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : categoryProjects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categoryProjects.map((project) => (
+                <div
+                  key={project.id}
+                  onClick={() => navigate(`/project/${project.slug}`)}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer group"
+                >
+                  <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    {project.hero_image ? (
+                      <img src={project.hero_image} alt={project.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-6xl font-bold text-white opacity-50">
+                        {project.name.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full capitalize">
+                        {project.category}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="text-sm font-bold text-slate-900">
+                          {project.average_rating.toFixed(1)}
+                        </span>
+                        <span className="text-sm text-slate-500">({project.total_reviews})</span>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+                      {project.name}
+                    </h3>
+                    <p className="text-slate-600 line-clamp-2 text-sm">{project.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="inline-block p-6 bg-slate-100 rounded-full mb-4">
+                <Grid3x3 className="w-12 h-12 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">No projects found</h3>
+              <p className="text-slate-600">
+                There are no projects in the {selectedCategory === 'all' ? 'database' : selectedCategory} category yet.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
