@@ -56,7 +56,7 @@ export default function Login() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="inline-block mb-4">
-            <h1 className="text-3xl font-bold text-slate-900">BuildHub</h1>
+            <h1 className="text-3xl font-bold text-slate-900">ProjectHub</h1>
           </Link>
           <h2 className="text-2xl font-bold text-slate-900">
             {isSignUp ? 'Create your account' : 'Welcome back'}
