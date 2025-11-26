@@ -109,7 +109,7 @@ export default function ProjectForm() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/dashboard" className="text-xl font-bold text-slate-900">
-              BuildHub
+              ProjectHub
             </Link>
             <Link to="/dashboard" className="text-slate-600 hover:text-slate-900 transition-colors">
               Back to Dashboard
