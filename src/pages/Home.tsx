@@ -105,7 +105,7 @@ export default function Home() {
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-2">
               <Grid3x3 className="w-8 h-8 text-blue-600" />
-              <span className="text-xl font-bold text-slate-900">BuildHub</span>
+              <span className="text-xl font-bold text-slate-900">ProjectHub</span>
             </Link>
             <div className="flex items-center space-x-4">
               {user ? (
@@ -288,7 +288,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Grid3x3 className="w-8 h-8" />
-            <span className="text-2xl font-bold">BuildHub</span>
+            <span className="text-2xl font-bold">ProjectHub</span>
           </div>
           <p className="text-slate-400">Empowering indie builders to ship in public</p>
         </div>
