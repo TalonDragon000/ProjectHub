@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Star, TrendingUp, Clock, Grid3x3 } from 'lucide-react';
+import { Search, Star, TrendingUp, Clock, Grid3x3, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Project } from '../types';
+import { Project, CreatorProfile } from '../types';
 import ProjectCarousel from '../components/ProjectCarousel';
+import CreatorCard from '../components/CreatorCard';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Project[]>([]);
+  const [creatorSearchResults, setCreatorSearchResults] = useState<CreatorProfile[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [newestProjects, setNewestProjects] = useState<Project[]>([]);
+  const [featuredCreators, setFeaturedCreators] = useState<CreatorProfile[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [categoryProjects, setCategoryProjects] = useState<Project[]>([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const [creatorsLoading, setCreatorsLoading] = useState(true);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -24,6 +28,7 @@ export default function Home() {
     loadFeaturedProjects();
     loadNewestProjects();
     loadCategoryProjects();
+    loadFeaturedCreators();
   }, []);
 
   useEffect(() => {
@@ -32,9 +37,10 @@ export default function Home() {
 
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
-      searchProjects();
+      performSearch();
     } else {
       setSearchResults([]);
+      setCreatorSearchResults([]);
       setShowResults(false);
     }
   }, [searchQuery]);
@@ -61,18 +67,61 @@ export default function Home() {
     if (data) setNewestProjects(data);
   };
 
-  const searchProjects = async () => {
-    const { data } = await supabase
+  const performSearch = async () => {
+    const projectsPromise = supabase
       .from('projects')
       .select('*')
       .eq('is_published', true)
       .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
       .limit(5);
 
-    if (data) {
-      setSearchResults(data);
-      setShowResults(true);
+    const creatorsPromise = supabase
+      .from('creator_profiles')
+      .select('*')
+      .or(`display_name.ilike.%${searchQuery}%,username.ilike.%${searchQuery}%`)
+      .limit(5);
+
+    const [projectsRes, creatorsRes] = await Promise.all([projectsPromise, creatorsPromise]);
+
+    if (projectsRes.data) {
+      setSearchResults(projectsRes.data);
     }
+
+    if (creatorsRes.data) {
+      const creatorsWithStats = await Promise.all(
+        creatorsRes.data.map(async (creator) => {
+          const { data: projects } = await supabase
+            .from('projects')
+            .select('id, average_rating')
+            .eq('creator_id', creator.id)
+            .eq('is_published', true);
+
+          const totalProjects = projects?.length || 0;
+          const averageRating = projects && projects.length > 0
+            ? projects.reduce((sum, p) => sum + p.average_rating, 0) / projects.length
+            : 0;
+
+          return {
+            ...creator,
+            total_projects: totalProjects,
+            average_rating: averageRating,
+          };
+        })
+      );
+      setCreatorSearchResults(creatorsWithStats);
+    }
+
+    setShowResults(true);
+  };
+
+  const loadFeaturedCreators = async () => {
+    setCreatorsLoading(true);
+    const { data, error } = await supabase.rpc('get_random_featured_creators', { limit_count: 12 });
+
+    if (data && !error) {
+      setFeaturedCreators(data);
+    }
+    setCreatorsLoading(false);
   };
 
   const loadCategoryProjects = async () => {
@@ -96,6 +145,21 @@ export default function Home() {
     navigate(`/project/${slug}`);
     setShowResults(false);
     setSearchQuery('');
+  };
+
+  const handleCreatorClick = (username: string) => {
+    navigate(`/creator/${username}`);
+    setShowResults(false);
+    setSearchQuery('');
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -143,33 +207,79 @@ export default function Home() {
               <Search className="w-6 h-6 text-slate-400 ml-2" />
               <input
                 type="text"
-                placeholder="Search for projects..."
+                placeholder="Search for projects or creators..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 px-4 py-2 outline-none text-lg"
               />
             </div>
 
-            {showResults && searchResults.length > 0 && (
+            {showResults && (creatorSearchResults.length > 0 || searchResults.length > 0) && (
               <div className="absolute w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-10">
-                {searchResults.map((project) => (
-                  <button
-                    key={project.id}
-                    onClick={() => handleProjectClick(project.slug)}
-                    className="w-full px-6 py-4 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-0"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-slate-900">{project.name}</h3>
-                        <p className="text-sm text-slate-600 line-clamp-1">{project.description}</p>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{project.average_rating.toFixed(1)}</span>
-                      </div>
+                {creatorSearchResults.length > 0 && (
+                  <div>
+                    <div className="px-6 py-2 bg-slate-50 border-b border-slate-200">
+                      <span className="text-xs font-semibold text-slate-600 uppercase">Creators</span>
                     </div>
-                  </button>
-                ))}
+                    {creatorSearchResults.map((creator) => (
+                      <button
+                        key={creator.id}
+                        onClick={() => handleCreatorClick(creator.username)}
+                        className="w-full px-6 py-4 hover:bg-slate-50 transition-colors text-left border-b border-slate-100"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold overflow-hidden flex-shrink-0">
+                            {creator.avatar_url ? (
+                              <img
+                                src={creator.avatar_url}
+                                alt={creator.display_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span>{getInitials(creator.display_name)}</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-slate-900">{creator.display_name}</h3>
+                            <p className="text-sm text-slate-600">@{creator.username} · {creator.total_projects || 0} projects</p>
+                          </div>
+                          {creator.average_rating !== undefined && creator.average_rating > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                              <span className="text-sm font-medium">{creator.average_rating.toFixed(1)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {searchResults.length > 0 && (
+                  <div>
+                    <div className="px-6 py-2 bg-slate-50 border-b border-slate-200">
+                      <span className="text-xs font-semibold text-slate-600 uppercase">Projects</span>
+                    </div>
+                    {searchResults.map((project) => (
+                      <button
+                        key={project.id}
+                        onClick={() => handleProjectClick(project.slug)}
+                        className="w-full px-6 py-4 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-0"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold text-slate-900">{project.name}</h3>
+                            <p className="text-sm text-slate-600 line-clamp-1">{project.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm font-medium">{project.average_rating.toFixed(1)}</span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -201,6 +311,46 @@ export default function Home() {
       </section>
 
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-3">
+              <Users className="w-6 h-6 text-blue-600" />
+              <h2 className="text-3xl font-bold text-slate-900">Browse by Creator</h2>
+            </div>
+          </div>
+          <p className="text-slate-600 mb-8">Discover talented builders and their projects</p>
+
+          {creatorsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 animate-pulse p-6">
+                  <div className="flex flex-col items-center">
+                    <div className="w-20 h-20 rounded-full bg-slate-200 mb-4"></div>
+                    <div className="h-4 bg-slate-200 rounded w-2/3 mb-2"></div>
+                    <div className="h-3 bg-slate-200 rounded w-1/2 mb-4"></div>
+                    <div className="h-3 bg-slate-200 rounded w-full mb-2"></div>
+                    <div className="h-8 bg-slate-200 rounded w-full mt-2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : featuredCreators.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {featuredCreators.map((creator) => (
+                <CreatorCard key={creator.id} creator={creator} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">No creators yet</h3>
+              <p className="text-slate-600">Be the first to publish a project!</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-slate-900 mb-8">Browse by Category</h2>
           <div className="flex flex-wrap gap-3 mb-8">

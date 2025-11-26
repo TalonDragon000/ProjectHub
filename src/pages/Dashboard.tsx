@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Eye, Edit, Trash2, ExternalLink, TrendingUp, Users, DollarSign, MessageSquare } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, ExternalLink, TrendingUp, Users, DollarSign, MessageSquare, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Project } from '../types';
@@ -120,6 +120,13 @@ export default function Dashboard() {
               <span className="text-slate-600">
                 Welcome, {profile?.display_name}
               </span>
+              <Link
+                to="/dashboard/settings"
+                className="flex items-center space-x-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Settings</span>
+              </Link>
               <button
                 onClick={signOut}
                 className="px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors"

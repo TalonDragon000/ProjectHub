@@ -110,7 +110,20 @@ export interface CreatorProfile {
   id: string;
   user_id: string;
   display_name: string;
+  username: string;
   bio?: string;
   avatar_url?: string;
+  email?: string;
+  email_public: boolean;
   created_at: string;
+  total_projects?: number;
+  average_rating?: number;
+  total_reviews?: number;
+}
+
+export interface CreatorStats {
+  creator_id: string;
+  total_projects: number;
+  average_rating: number;
+  total_reviews: number;
 }
