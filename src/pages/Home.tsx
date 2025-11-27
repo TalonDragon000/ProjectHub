@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Star, TrendingUp, Clock, Grid3x3, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Project, CreatorProfile } from '../types';
+import { Project, Profile } from '../types';
 import ProjectCarousel from '../components/ProjectCarousel';
 import CreatorCard from '../components/CreatorCard';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,11 +10,11 @@ import { useAuth } from '../contexts/AuthContext';
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Project[]>([]);
-  const [creatorSearchResults, setCreatorSearchResults] = useState<CreatorProfile[]>([]);
+  const [creatorSearchResults, setCreatorSearchResults] = useState<Profile[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [newestProjects, setNewestProjects] = useState<Project[]>([]);
-  const [featuredCreators, setFeaturedCreators] = useState<CreatorProfile[]>([]);
+  const [featuredCreators, setFeaturedCreators] = useState<Profile[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [categoryProjects, setCategoryProjects] = useState<Project[]>([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
@@ -76,7 +76,7 @@ export default function Home() {
       .limit(5);
 
     const creatorsPromise = supabase
-      .from('creator_profiles')
+      .from('profiles')
       .select('*')
       .or(`display_name.ilike.%${searchQuery}%,username.ilike.%${searchQuery}%`)
       .limit(5);
@@ -93,7 +93,7 @@ export default function Home() {
           const { data: projects } = await supabase
             .from('projects')
             .select('id, average_rating')
-            .eq('creator_id', creator.id)
+            .eq('user_id', creator.id)
             .eq('is_published', true);
 
           const totalProjects = projects?.length || 0;
@@ -116,7 +116,7 @@ export default function Home() {
 
   const loadFeaturedCreators = async () => {
     setCreatorsLoading(true);
-    const { data, error } = await supabase.rpc('get_random_featured_creators', { limit_count: 12 });
+    const { data, error } = await supabase.rpc('get_featured_profiles', { limit_count: 12 });
 
     if (data && !error) {
       setFeaturedCreators(data);

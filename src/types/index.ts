@@ -1,6 +1,6 @@
 export interface Project {
   id: string;
-  creator_id: string;
+  user_id: string;
   name: string;
   slug: string;
   description: string;
@@ -12,18 +12,20 @@ export interface Project {
   is_published: boolean;
   average_rating: number;
   total_reviews: number;
+  profile?: Profile;
 }
 
 export interface Review {
   id: string;
   project_id: string;
-  reviewer_name?: string;
-  reviewer_email?: string;
+  user_id: string;
   rating: number;
   title: string;
   review_text: string;
   created_at: string;
+  updated_at?: string;
   is_verified: boolean;
+  profile?: Profile;
 }
 
 export interface QuickFeedback {
@@ -106,24 +108,31 @@ export interface ProjectUpdate {
   is_pinned: boolean;
 }
 
-export interface CreatorProfile {
+export interface Profile {
   id: string;
   user_id: string;
   display_name: string;
   username: string;
   bio?: string;
   avatar_url?: string;
-  email?: string;
   email_public: boolean;
+  open_to_beta_test: boolean;
+  is_creator: boolean;
   created_at: string;
+  updated_at: string;
   total_projects?: number;
   average_rating?: number;
   total_reviews?: number;
 }
 
-export interface CreatorStats {
-  creator_id: string;
-  total_projects: number;
-  average_rating: number;
-  total_reviews: number;
+export interface ProfileStats {
+  total_reviews_written: number;
+  average_rating_given: number;
+  projects_reviewed: number;
+  total_projects_created: number;
+  average_project_rating: number;
+  total_reviews_received: number;
 }
+
+export type CreatorProfile = Profile;
+export type CreatorStats = ProfileStats;

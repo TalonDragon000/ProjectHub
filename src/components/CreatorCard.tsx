@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { User, Star, Briefcase } from 'lucide-react';
-import { CreatorProfile } from '../types';
+import { Profile } from '../types';
 
 interface CreatorCardProps {
-  creator: CreatorProfile;
+  creator: Profile;
 }
 
 export default function CreatorCard({ creator }: CreatorCardProps) {
@@ -20,7 +20,7 @@ export default function CreatorCard({ creator }: CreatorCardProps) {
 
   return (
     <div
-      onClick={() => navigate(`/creator/${creator.username}`)}
+      onClick={() => navigate(`/profile/${creator.username}`)}
       className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer group p-6"
     >
       <div className="flex flex-col items-center text-center">
