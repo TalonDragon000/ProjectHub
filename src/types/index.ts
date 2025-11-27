@@ -108,6 +108,8 @@ export interface ProjectUpdate {
   is_pinned: boolean;
 }
 
+export type PaymentProvider = 'paypal' | 'stripe' | 'ko-fi';
+
 export interface Profile {
   id: string;
   user_id: string;
@@ -118,6 +120,8 @@ export interface Profile {
   email_public: boolean;
   open_to_beta_test: boolean;
   is_creator: boolean;
+  payment_provider?: PaymentProvider | null;
+  payment_username?: string | null;
   created_at: string;
   updated_at: string;
   total_projects?: number;

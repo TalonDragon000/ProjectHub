@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Upload, Save, X, Grid3x3, ArrowLeft, Check, Loader } from 'lucide-react';
+import { User, Upload, Save, X, Grid3x3, ArrowLeft, Check, Loader, DollarSign } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { PaymentProvider } from '../types';
 
 export default function ProfileSettings() {
   const { user, profile } = useAuth();
@@ -20,6 +21,8 @@ export default function ProfileSettings() {
 
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameChecking, setUsernameChecking] = useState(false);
+  const [paymentProvider, setPaymentProvider] = useState<PaymentProvider | ''>('');
+  const [paymentUsername, setPaymentUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -38,6 +41,8 @@ export default function ProfileSettings() {
       setOpenToBetaTest(profile.open_to_beta_test);
       setAvatarUrl(profile.avatar_url || '');
       setAvatarPreview(profile.avatar_url || '');
+      setPaymentProvider(profile.payment_provider || '');
+      setPaymentUsername(profile.payment_username || '');
     }
   }, [user, profile, navigate]);
 
@@ -157,6 +162,8 @@ export default function ProfileSettings() {
           email_public: emailPublic,
           open_to_beta_test: openToBetaTest,
           avatar_url: newAvatarUrl || null,
+          payment_provider: paymentProvider || null,
+          payment_username: paymentUsername.trim() || null,
         })
         .eq('id', profile?.id);
 
@@ -396,6 +403,89 @@ export default function ProfileSettings() {
                       Project creators can see this badge on your profile, indicating you're available to test and provide feedback on new features and projects.
                     </p>
                   </div>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 mb-4 flex items-center space-x-2">
+                  <DollarSign className="w-5 h-5" />
+                  <span>Payment Link (Optional)</span>
+                </h2>
+                <p className="text-sm text-slate-600 mb-4">
+                  Add a payment link so supporters can tip or donate to your projects.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Payment Provider
+                    </label>
+                    <select
+                      value={paymentProvider}
+                      onChange={(e) => {
+                        setPaymentProvider(e.target.value as PaymentProvider | '');
+                        if (!e.target.value) {
+                          setPaymentUsername('');
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">None</option>
+                      <option value="paypal">PayPal</option>
+                      <option value="ko-fi">Ko-fi</option>
+                      <option value="stripe">Stripe Payment Link</option>
+                    </select>
+                  </div>
+
+                  {paymentProvider && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        {paymentProvider === 'paypal' && 'PayPal.me Username'}
+                        {paymentProvider === 'ko-fi' && 'Ko-fi Username'}
+                        {paymentProvider === 'stripe' && 'Stripe Payment Link ID'}
+                      </label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-slate-500 text-sm whitespace-nowrap">
+                            {paymentProvider === 'paypal' && 'paypal.me/'}
+                            {paymentProvider === 'ko-fi' && 'ko-fi.com/'}
+                            {paymentProvider === 'stripe' && 'buy.stripe.com/'}
+                          </span>
+                          <input
+                            type="text"
+                            value={paymentUsername}
+                            onChange={(e) => setPaymentUsername(e.target.value)}
+                            className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            placeholder={
+                              paymentProvider === 'paypal' ? 'YourUsername' :
+                              paymentProvider === 'ko-fi' ? 'yourusername' :
+                              'your-payment-link-id'
+                            }
+                            pattern="[a-zA-Z0-9_-]{3,100}"
+                            maxLength={100}
+                          />
+                        </div>
+                        {paymentUsername && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-sm font-medium text-slate-700 mb-1">Preview:</p>
+                            <a
+                              href={`https://${paymentProvider === 'paypal' ? 'paypal.me' : paymentProvider === 'ko-fi' ? 'ko-fi.com' : 'buy.stripe.com'}/${paymentUsername}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-700 underline break-all"
+                            >
+                              {`https://${paymentProvider === 'paypal' ? 'paypal.me' : paymentProvider === 'ko-fi' ? 'ko-fi.com' : 'buy.stripe.com'}/${paymentUsername}`}
+                            </a>
+                          </div>
+                        )}
+                        <p className="text-xs text-slate-500">
+                          {paymentProvider === 'paypal' && 'Enter only your PayPal.me username, not the full URL'}
+                          {paymentProvider === 'ko-fi' && 'Enter only your Ko-fi username, not the full URL'}
+                          {paymentProvider === 'stripe' && 'Enter only the payment link ID from your Stripe payment link URL'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

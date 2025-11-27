@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, MessageSquare, ExternalLink, Heart, TrendingUp, Calendar } from 'lucide-react';
+import { Star, MessageSquare, ExternalLink, Heart, TrendingUp, Calendar, DollarSign, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Project, Review, QuickFeedback, Feature, Milestone, DonationGoal, ProjectLink } from '../types';
+import { Project, Review, QuickFeedback, Feature, Milestone, DonationGoal, ProjectLink, Profile } from '../types';
 import { format } from 'date-fns';
 
 export default function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
   const [project, setProject] = useState<Project | null>(null);
+  const [creator, setCreator] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [feedback, setFeedback] = useState<QuickFeedback[]>([]);
   const [features, setFeatures] = useState<Feature[]>([]);
@@ -67,6 +68,7 @@ export default function ProjectPage() {
 
     if (projectData) {
       setProject(projectData);
+      loadCreator(projectData.user_id);
       trackPageView(projectData.id);
       loadReviews(projectData.id);
       loadFeedback(projectData.id);
@@ -76,6 +78,16 @@ export default function ProjectPage() {
       loadDonationGoals(projectData.id);
     }
     setLoading(false);
+  };
+
+  const loadCreator = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (data) setCreator(data);
   };
 
   const trackPageView = async (projectId: string) => {
@@ -267,7 +279,19 @@ export default function ProjectPage() {
                     {project.category}
                   </span>
                 </div>
-                <p className="text-lg text-slate-600">{project.description}</p>
+                <p className="text-lg text-slate-600 mb-4">{project.description}</p>
+                {creator && (
+                  <div className="flex items-center space-x-3 text-slate-600">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm">Created by</span>
+                    <Link
+                      to={`/creator/${creator.username}`}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
+                    >
+                      {creator.display_name}
+                    </Link>
+                  </div>
+                )}
               </div>
               <div className="text-right">
                 <div className="flex items-center justify-end space-x-2 mb-2">
@@ -469,6 +493,28 @@ export default function ProjectPage() {
                 ))}
               </div>
             </div>
+
+            {creator?.payment_provider && creator?.payment_username && (
+              <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-green-200">
+                <div className="flex items-center space-x-2 mb-4">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                  <h3 className="text-xl font-bold text-slate-900">Support the Creator</h3>
+                </div>
+                <p className="text-sm text-slate-600 mb-4">
+                  Enjoy this project? Show your support by leaving a tip for {creator.display_name}!
+                </p>
+                <a
+                  href={`https://${creator.payment_provider === 'paypal' ? 'paypal.me' : creator.payment_provider === 'ko-fi' ? 'ko-fi.com' : 'buy.stripe.com'}/${creator.payment_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <DollarSign className="w-5 h-5" />
+                  <span>Tip via {creator.payment_provider === 'paypal' ? 'PayPal' : creator.payment_provider === 'ko-fi' ? 'Ko-fi' : 'Stripe'}</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            )}
 
             {features.length > 0 && (
               <div className="bg-white rounded-xl shadow-lg p-6">
