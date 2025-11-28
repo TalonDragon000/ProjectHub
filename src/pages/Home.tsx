@@ -20,7 +20,7 @@ export default function Home() {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [creatorsLoading, setCreatorsLoading] = useState(true);
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   const categories = ['all', 'games', 'saas', 'tools', 'apps', 'design', 'other'];
 
@@ -196,12 +196,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold text-slate-900 mb-6">
             Discover & Support
-            <Link
-              to={profile ? `/profile/${profile.username}` : "/login"}
-              className="block text-blue-600 hover:text-blue-700 transition-colors underline decoration-2 underline-offset-4"
-            >
-              Indie Projects
-            </Link>
+            <span className="block text-blue-600">Indie Projects</span>
           </h1>
           <p className="text-xl text-slate-600 mb-12">
             Find amazing projects built by solo creators and freelancers. Leave reviews, provide feedback, and support their work.
