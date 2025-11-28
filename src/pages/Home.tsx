@@ -196,7 +196,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold text-slate-900 mb-6">
             Discover & Support
-            <span className="block text-blue-600">Solo Projects</span>
+            <span className="block text-blue-600">Startup Projects</span>
           </h1>
           <p className="text-xl text-slate-600 mb-12">
             Find amazing projects built by solo creators and freelancers. Leave reviews, provide feedback, and support their work.
