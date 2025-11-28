@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Star, Briefcase, MessageSquare, Calendar, Award, Settings as SettingsIcon } from 'lucide-react';
+import { Star, Briefcase, MessageSquare, Calendar, Award, Settings as SettingsIcon, Mail, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Profile, Review, Project } from '../types';
 import { format } from 'date-fns';
@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
-  const { user } = useAuth();
+  const { user, profile: currentUserProfile, setActiveView } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -16,6 +16,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'reviews' | 'projects'>('reviews');
   const [reviewSort, setReviewSort] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -132,6 +134,33 @@ export default function ProfilePage() {
   const stats = calculateStats();
   const isOwnProfile = user && profile.user_id === user.id;
 
+  const handleSendMessage = async () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (!currentUserProfile || !profile) return;
+
+    setSendingMessage(true);
+
+    try {
+      const { data, error } = await supabase.rpc('get_or_create_conversation', {
+        user1_profile_id: currentUserProfile.id,
+        user2_profile_id: profile.id,
+      });
+
+      if (!error && data) {
+        setActiveView('messages');
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Error creating conversation:', err);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <nav className="bg-white border-b border-slate-200">
@@ -201,15 +230,27 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
-              {isOwnProfile && (
-                <Link
-                  to="/dashboard/settings"
-                  className="flex items-center space-x-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
-                >
-                  <SettingsIcon className="w-4 h-4" />
-                  <span>Edit Profile</span>
-                </Link>
-              )}
+              <div className="flex items-center space-x-3">
+                {!isOwnProfile && (
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={sendingMessage}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>{sendingMessage ? 'Loading...' : 'Send Message'}</span>
+                  </button>
+                )}
+                {isOwnProfile && (
+                  <Link
+                    to="/dashboard/settings"
+                    className="flex items-center space-x-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                  >
+                    <SettingsIcon className="w-4 h-4" />
+                    <span>Edit Profile</span>
+                  </Link>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-slate-200">
@@ -386,6 +427,45 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">Sign Up to Send Messages</h2>
+              <p className="text-slate-600">
+                Create an account to start conversations with other users and build connections in
+                the community.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Link
+                to="/login"
+                className="block w-full px-6 py-3 bg-blue-600 text-white text-center font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Sign Up / Login
+              </Link>
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="block w-full px-6 py-3 bg-slate-100 text-slate-700 text-center font-semibold rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
