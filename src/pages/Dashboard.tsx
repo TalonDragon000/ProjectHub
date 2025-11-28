@@ -189,7 +189,12 @@ export default function Dashboard() {
                   <span className="text-sm font-medium">Creator View</span>
                 </button>
               </div>
-              <span className="text-slate-600">Welcome, {profile?.display_name}</span>
+              <Link
+                to={`/profile/${profile?.username}`}
+                className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+              >
+                Welcome, {profile?.display_name}
+              </Link>
               <Link
                 to="/dashboard/settings"
                 className="flex items-center space-x-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors"
