@@ -4,9 +4,11 @@ import { Star, MessageSquare, ExternalLink, Heart, TrendingUp, Calendar, DollarS
 import { supabase } from '../lib/supabase';
 import { Project, Review, QuickFeedback, Feature, Milestone, DonationGoal, ProjectLink, Profile } from '../types';
 import { format } from 'date-fns';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { user, profile } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [creator, setCreator] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -104,7 +106,7 @@ export default function ProjectPage() {
   const loadReviews = async (projectId: string) => {
     const { data } = await supabase
       .from('reviews')
-      .select('*')
+      .select('*, profile:profiles(id, display_name, username, avatar_url)')
       .eq('project_id', projectId)
       .order('created_at', { ascending: false });
 
@@ -180,16 +182,22 @@ export default function ProjectPage() {
     e.preventDefault();
     if (!project || rating === 0) return;
 
-    const { error } = await supabase.from('reviews').insert([
-      {
-        project_id: project.id,
-        reviewer_name: reviewerName || null,
-        reviewer_email: reviewerEmail || null,
-        rating,
-        title: reviewTitle,
-        review_text: reviewText,
-      },
-    ]);
+    const reviewData: any = {
+      project_id: project.id,
+      rating,
+      title: reviewTitle,
+      review_text: reviewText,
+    };
+
+    if (user && profile) {
+      reviewData.user_id = profile.id;
+    } else {
+      reviewData.reviewer_name = reviewerName || null;
+      reviewData.reviewer_email = reviewerEmail || null;
+      reviewData.user_id = null;
+    }
+
+    const { error } = await supabase.from('reviews').insert([reviewData]);
 
     if (!error) {
       setSubmitSuccess('Review submitted successfully!');
@@ -338,6 +346,25 @@ export default function ProjectPage() {
                 </div>
               )}
               <form onSubmit={handleSubmitReview} className="space-y-4">
+                {user && profile ? (
+                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center space-x-2 text-blue-800">
+                      <User className="w-4 h-4" />
+                      <span className="text-sm font-medium">Posting as {profile.display_name}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <p className="text-sm text-slate-600 mb-2">
+                      Posting anonymously.{' '}
+                      <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                        Sign in
+                      </Link>{' '}
+                      to post as yourself.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Your Rating</label>
                   <div className="flex space-x-2">
@@ -362,32 +389,34 @@ export default function ProjectPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Name (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={reviewerName}
-                      onChange={(e) => setReviewerName(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      placeholder="John Doe"
-                    />
+                {!user && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Name (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={reviewerName}
+                        onChange={(e) => setReviewerName(e.target.value)}
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Email (Optional)
+                      </label>
+                      <input
+                        type="email"
+                        value={reviewerEmail}
+                        onChange={(e) => setReviewerEmail(e.target.value)}
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        placeholder="you@example.com"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Email (Optional)
-                    </label>
-                    <input
-                      type="email"
-                      value={reviewerEmail}
-                      onChange={(e) => setReviewerEmail(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -451,9 +480,18 @@ export default function ProjectPage() {
                       </span>
                     </div>
                     <p className="text-slate-700 mb-2">{review.review_text}</p>
-                    <p className="text-sm text-slate-500">
-                      {review.reviewer_name || 'Anonymous'}
-                    </p>
+                    <div className="text-sm text-slate-500">
+                      {review.profile ? (
+                        <Link
+                          to={`/creator/${review.profile.username}`}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          {review.profile.display_name}
+                        </Link>
+                      ) : (
+                        <span>{review.reviewer_name || 'Anonymous'}</span>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {reviews.length === 0 && (

@@ -18,10 +18,12 @@ export interface Project {
 export interface Review {
   id: string;
   project_id: string;
-  user_id: string;
+  user_id: string | null;
   rating: number;
   title: string;
   review_text: string;
+  reviewer_name?: string | null;
+  reviewer_email?: string | null;
   created_at: string;
   updated_at?: string;
   is_verified: boolean;
