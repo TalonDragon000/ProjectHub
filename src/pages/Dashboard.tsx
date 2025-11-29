@@ -14,6 +14,8 @@ import {
   Star,
   Mail,
   LogOut,
+  Menu,
+  X,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,6 +33,7 @@ export default function Dashboard() {
   const [creatorStats, setCreatorStats] = useState<any>({});
   const [userStats, setUserStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -162,11 +165,24 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-6 border-b border-slate-200">
+      {/* Sidebar: slides in on mobile, static on desktop */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-200 md:static md:translate-x-0 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-slate-900">
             ProjectHub
           </Link>
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(false)}
+            className="inline-flex items-center justify-center rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 md:hidden"
+            aria-label="Close sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
@@ -241,7 +257,32 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      {/* Backdrop when sidebar is open on mobile */}
+      {isSidebarOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-label="Close sidebar overlay"
+        />
+      )}
+
+      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+        {/* Mobile top bar with menu button */}
+        <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between bg-white border-b border-slate-200 px-4 py-3 md:hidden">
+          <Link to="/" className="text-lg font-bold text-slate-900">
+            ProjectHub
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            className="inline-flex items-center justify-center rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            aria-label="Open sidebar"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {activeView === 'messages' ? (
             <div className="h-[calc(100vh-8rem)]">
@@ -308,10 +349,10 @@ export default function Dashboard() {
                       <div key={review.id} className="border-b border-slate-200 last:border-0 pb-4 last:pb-0">
                         <div className="flex items-start justify-between mb-2">
                           <Link
-                            to={`/project/${review.project?.slug}`}
+                            to={`/project/${review.project_slug}`}
                             className="font-semibold text-slate-900 hover:text-blue-600"
                           >
-                            {review.project?.name}
+                            {review.project_slug}
                           </Link>
                           <div className="flex items-center text-yellow-500">
                             {[...Array(review.rating)].map((_, i) => (
