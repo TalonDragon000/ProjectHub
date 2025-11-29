@@ -13,6 +13,7 @@ export default function ProfileSettings() {
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [emailPublic, setEmailPublic] = useState(false);
+  const [openToBetaTest, setOpenToBetaTest] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState('');
@@ -34,6 +35,7 @@ export default function ProfileSettings() {
       setUsername(profile.username);
       setBio(profile.bio || '');
       setEmailPublic(profile.email_public);
+      setOpenToBetaTest(profile.open_to_beta_test);
       setAvatarUrl(profile.avatar_url || '');
       setAvatarPreview(profile.avatar_url || '');
     }
@@ -56,7 +58,7 @@ export default function ProfileSettings() {
 
     setUsernameChecking(true);
     const { data } = await supabase
-      .from('creator_profiles')
+      .from('profiles')
       .select('id')
       .eq('username', username)
       .neq('id', profile?.id || '');
@@ -147,12 +149,13 @@ export default function ProfileSettings() {
       }
 
       const { error: updateError } = await supabase
-        .from('creator_profiles')
+        .from('profiles')
         .update({
           display_name: displayName.trim(),
           username: username.trim().toLowerCase(),
           bio: bio.trim() || null,
           email_public: emailPublic,
+          open_to_beta_test: openToBetaTest,
           avatar_url: newAvatarUrl || null,
         })
         .eq('id', profile?.id);
@@ -372,6 +375,27 @@ export default function ProfileSettings() {
                     maxLength={500}
                   />
                   <p className="text-sm text-slate-500 mt-1">{bio.length}/500 characters</p>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 mb-4">Beta Testing</h2>
+                <div className="flex items-start space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="openToBetaTest"
+                    checked={openToBetaTest}
+                    onChange={(e) => setOpenToBetaTest(e.target.checked)}
+                    className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500 mt-0.5"
+                  />
+                  <div>
+                    <label htmlFor="openToBetaTest" className="text-sm font-medium text-slate-900 block mb-1">
+                      I'm open to beta testing new projects
+                    </label>
+                    <p className="text-sm text-slate-600">
+                      Project creators can see this badge on your profile, indicating you're available to test and provide feedback on new features and projects.
+                    </p>
+                  </div>
                 </div>
               </div>
 

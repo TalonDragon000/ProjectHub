@@ -1,13 +1,15 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { CreatorProfile } from '../types';
+import { Profile } from '../types';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: CreatorProfile | null;
+  profile: Profile | null;
   loading: boolean;
+  activeView: 'user' | 'creator';
+  setActiveView: (view: 'user' | 'creator') => void;
   signUp: (email: string, password: string, displayName: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -19,18 +21,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<CreatorProfile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveViewState] = useState<'user' | 'creator'>('user');
+
+  const setActiveView = (view: 'user' | 'creator') => {
+    setActiveViewState(view);
+    localStorage.setItem('activeView', view);
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
-      .from('creator_profiles')
+      .from('profiles')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (data && !error) {
       setProfile(data);
+
+      const savedView = localStorage.getItem('activeView') as 'user' | 'creator' | null;
+      if (savedView === 'creator' && data.is_creator) {
+        setActiveViewState('creator');
+      } else {
+        setActiveViewState('user');
+      }
     }
   };
 
@@ -70,22 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          display_name: displayName,
+        },
+      },
     });
-
-    if (data.user && !error) {
-      const { error: profileError } = await supabase
-        .from('creator_profiles')
-        .insert([
-          {
-            user_id: data.user.id,
-            display_name: displayName,
-          },
-        ]);
-
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-      }
-    }
 
     return { error };
   };
@@ -108,6 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     profile,
     loading,
+    activeView,
+    setActiveView,
     signUp,
     signIn,
     signOut,

@@ -6,7 +6,7 @@ import Dashboard from './pages/Dashboard';
 import ProjectPage from './pages/ProjectPage';
 import ProjectForm from './pages/ProjectForm';
 import AuthCallback from './pages/AuthCallback';
-import CreatorProfile from './pages/CreatorProfile';
+import ProfilePage from './pages/ProfilePage';
 import ProfileSettings from './pages/ProfileSettings';
 
 function App() {
@@ -18,7 +18,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/project/:slug" element={<ProjectPage />} />
-          <Route path="/creator/:username" element={<CreatorProfile />} />
+          <Route path="/profile/:username" element={<ProfilePage />} />
+          <Route path="/creator/:username" element={<ProfilePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/settings" element={<ProfileSettings />} />
           <Route path="/dashboard/projects/new" element={<ProjectForm />} />

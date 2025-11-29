@@ -89,7 +89,7 @@ export default function ProjectForm() {
         .insert([
           {
             ...projectData,
-            creator_id: profile.id,
+            user_id: profile.id,
           },
         ]);
 
