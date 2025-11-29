@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, MessageSquare, ExternalLink, Heart, TrendingUp, Calendar, DollarSign, User } from 'lucide-react';
+import { Star, MessageSquare, ExternalLink, Heart, TrendingUp, Calendar, DollarSign, User, Lightbulb, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Project, Review, QuickFeedback, Feature, Milestone, DonationGoal, ProjectLink, Profile } from '../types';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
+import IdeaTab from '../components/IdeaTab';
 
 export default function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -27,6 +28,7 @@ export default function ProjectPage() {
   const [reviewerEmail, setReviewerEmail] = useState('');
   const [quickMessage, setQuickMessage] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState<'overview' | 'idea'>('overview');
 
   useEffect(() => {
     if (slug) {
@@ -336,10 +338,40 @@ export default function ProjectPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">Leave a Review</h2>
+        <div className="mb-8 bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="border-b border-slate-200">
+            <div className="flex space-x-1 px-6">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`flex items-center space-x-2 px-6 py-4 font-medium border-b-2 transition-colors ${
+                  activeTab === 'overview'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <FileText className="w-5 h-5" />
+                <span>Overview & Reviews</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('idea')}
+                className={`flex items-center space-x-2 px-6 py-4 font-medium border-b-2 transition-colors ${
+                  activeTab === 'idea'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Lightbulb className="w-5 h-5" />
+                <span>Idea</span>
+              </button>
+            </div>
+          </div>
+          <div className="p-8">
+            {activeTab === 'idea' ? (
+              <IdeaTab projectId={project.id} />
+            ) : (
+              <div className="space-y-8">
+                <div className="bg-white rounded-xl">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-6">Leave a Review</h2>
               {submitSuccess && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
                   {submitSuccess}
@@ -499,9 +531,7 @@ export default function ProjectPage() {
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="space-y-8">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-bold text-slate-900 mb-4">Quick Feedback</h3>
               <form onSubmit={handleSubmitFeedback} className="mb-6">
@@ -531,9 +561,16 @@ export default function ProjectPage() {
                 ))}
               </div>
             </div>
+              </div>
+            )}
+          </div>
+        </div>
 
-            {creator?.payment_provider && creator?.payment_username && (
-              <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-green-200">
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-3">
+              {creator?.payment_provider && creator?.payment_username && (
+                <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-green-200">
                 <div className="flex items-center space-x-2 mb-4">
                   <DollarSign className="w-6 h-6 text-green-600" />
                   <h3 className="text-xl font-bold text-slate-900">Support the Creator</h3>
@@ -599,8 +636,9 @@ export default function ProjectPage() {
                 </button>
               </div>
             )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

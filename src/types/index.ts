@@ -122,6 +122,7 @@ export interface Profile {
   email_public: boolean;
   open_to_beta_test: boolean;
   is_creator: boolean;
+  is_idea_maker?: boolean;
   payment_provider?: PaymentProvider | null;
   payment_username?: string | null;
   created_at: string;
@@ -165,4 +166,24 @@ export interface Message {
   created_at: string;
   updated_at: string;
   sender?: Profile;
+}
+
+export interface ProjectIdea {
+  id: string;
+  project_id: string;
+  problem_area: string;
+  keywords: string[];
+  hot_count: number;
+  cold_count: number;
+  collaboration_open: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IdeaReaction {
+  id: string;
+  project_id: string;
+  user_id: string | null;
+  reaction_type: 'hot' | 'cold';
+  created_at: string;
 }

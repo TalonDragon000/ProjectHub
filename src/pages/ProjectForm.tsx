@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Save, X } from 'lucide-react';
+import { Save, X, Lightbulb, FileText, Rocket, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -10,14 +10,24 @@ export default function ProjectForm() {
   const navigate = useNavigate();
   const { profile } = useAuth();
 
+  const [currentStep, setCurrentStep] = useState(1);
+  const [projectId, setProjectId] = useState<string | null>(id || null);
+
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('saas');
   const [status, setStatus] = useState<'active' | 'paused' | 'completed'>('active');
   const [heroImage, setHeroImage] = useState('');
+  const [isPublished, setIsPublished] = useState(false);
+
+  const [problemArea, setProblemArea] = useState('');
+  const [keywords, setKeywords] = useState('');
+  const [collaborationOpen, setCollaborationOpen] = useState(true);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
 
   const categories = ['games', 'saas', 'tools', 'apps', 'design', 'other'];
 
@@ -28,80 +38,215 @@ export default function ProjectForm() {
   }, [id, isEdit]);
 
   useEffect(() => {
-    if (!isEdit && name) {
+    if (!isEdit && name && currentStep === 1) {
       const generatedSlug = name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
       setSlug(generatedSlug);
     }
-  }, [name, isEdit]);
+  }, [name, isEdit, currentStep]);
 
   const loadProject = async () => {
     if (!id) return;
 
-    const { data, error } = await supabase
+    const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select('*')
       .eq('id', id)
       .maybeSingle();
 
-    if (data && !error) {
-      setName(data.name);
-      setSlug(data.slug);
-      setDescription(data.description);
-      setCategory(data.category);
-      setStatus(data.status);
-      setHeroImage(data.hero_image || '');
+    if (projectData && !projectError) {
+      setName(projectData.name);
+      setSlug(projectData.slug);
+      setDescription(projectData.description);
+      setCategory(projectData.category);
+      setStatus(projectData.status);
+      setHeroImage(projectData.hero_image || '');
+      setIsPublished(projectData.is_published);
+      setProjectId(projectData.id);
+
+      const { data: ideaData } = await supabase
+        .from('project_ideas')
+        .select('*')
+        .eq('project_id', id)
+        .maybeSingle();
+
+      if (ideaData) {
+        setProblemArea(ideaData.problem_area);
+        setKeywords(ideaData.keywords.join(', '));
+        setCollaborationOpen(ideaData.collaboration_open);
+      }
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveStep1 = async () => {
+    if (!name || !problemArea || !category) {
+      setError('Please fill in all required fields');
+      return false;
+    }
 
     setLoading(true);
     setError('');
 
-    const projectData = {
-      name,
-      slug,
-      description,
-      category,
-      status,
-      hero_image: heroImage || null,
-      updated_at: new Date().toISOString(),
-    };
+    try {
+      if (projectId) {
+        const { error: updateError } = await supabase
+          .from('projects')
+          .update({
+            name,
+            slug,
+            category,
+            hero_image: heroImage || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', projectId);
 
-    if (isEdit && id) {
-      const { error: updateError } = await supabase
-        .from('projects')
-        .update(projectData)
-        .eq('id', id);
+        if (updateError) throw updateError;
 
-      if (updateError) {
-        setError(updateError.message);
-        setLoading(false);
-        return;
+        const keywordArray = keywords
+          .split(',')
+          .map((k) => k.trim())
+          .filter((k) => k.length > 0);
+
+        const { error: ideaError } = await supabase
+          .from('project_ideas')
+          .upsert({
+            project_id: projectId,
+            problem_area: problemArea,
+            keywords: keywordArray,
+            collaboration_open: collaborationOpen,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (ideaError) throw ideaError;
+      } else {
+        const { data: newProject, error: insertError } = await supabase
+          .from('projects')
+          .insert([
+            {
+              name,
+              slug,
+              description: problemArea,
+              category,
+              status: 'active',
+              hero_image: heroImage || null,
+              user_id: profile.id,
+              is_published: false,
+            },
+          ])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        setProjectId(newProject.id);
+
+        const keywordArray = keywords
+          .split(',')
+          .map((k) => k.trim())
+          .filter((k) => k.length > 0);
+
+        const { error: ideaError } = await supabase
+          .from('project_ideas')
+          .insert([
+            {
+              project_id: newProject.id,
+              problem_area: problemArea,
+              keywords: keywordArray,
+              collaboration_open: collaborationOpen,
+            },
+          ]);
+
+        if (ideaError) throw ideaError;
       }
-    } else {
-      const { error: insertError } = await supabase
-        .from('projects')
-        .insert([
-          {
-            ...projectData,
-            user_id: profile.id,
-          },
-        ]);
 
-      if (insertError) {
-        setError(insertError.message);
-        setLoading(false);
-        return;
-      }
+      setSaveMessage('Idea saved successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveStep2 = async () => {
+    if (!description) {
+      setError('Please provide a project description');
+      return false;
     }
 
-    navigate('/dashboard');
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error: updateError } = await supabase
+        .from('projects')
+        .update({
+          description,
+          slug,
+          status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', projectId);
+
+      if (updateError) throw updateError;
+
+      setSaveMessage('Project details saved!');
+      setTimeout(() => setSaveMessage(''), 3000);
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handlePublish = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error: updateError } = await supabase
+        .from('projects')
+        .update({
+          is_published: isPublished,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', projectId);
+
+      if (updateError) throw updateError;
+
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
+    if (currentStep === 1) {
+      const success = await saveStep1();
+      if (success) setCurrentStep(2);
+    } else if (currentStep === 2) {
+      const success = await saveStep2();
+      if (success) setCurrentStep(3);
+    }
+  };
+
+  const handleBack = () => {
+    setError('');
+    setCurrentStep(currentStep - 1);
+  };
+
+  const steps = [
+    { num: 1, label: 'Idea', icon: Lightbulb },
+    { num: 2, label: 'Details', icon: FileText },
+    { num: 3, label: 'Launch', icon: Rocket },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -118,7 +263,41 @@ export default function ProjectForm() {
         </div>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-4">
+            {steps.map((step, idx) => (
+              <div key={step.num} className="flex items-center">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                      currentStep >= step.num
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    <step.icon className="w-6 h-6" />
+                  </div>
+                  <span
+                    className={`mt-2 text-sm font-medium ${
+                      currentStep >= step.num ? 'text-blue-600' : 'text-slate-500'
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+                {idx < steps.length - 1 && (
+                  <div
+                    className={`w-24 h-1 mx-4 mb-6 rounded transition-all ${
+                      currentStep > step.num ? 'bg-blue-600' : 'bg-slate-200'
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-6">
             {isEdit ? 'Edit Project' : 'Create New Project'}
@@ -130,58 +309,61 @@ export default function ProjectForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Project Name *
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                placeholder="My Awesome Project"
-                required
-              />
+          {saveMessage && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+              {saveMessage}
             </div>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                URL Slug *
-              </label>
-              <div className="flex items-center space-x-2">
-                <span className="text-slate-500">projecthub.com/project/</span>
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Project Name *
+                </label>
                 <input
                   type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  placeholder="my-awesome-project"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  placeholder="My Awesome Project"
                   required
-                  pattern="[a-z0-9-]+"
-                  title="Only lowercase letters, numbers, and hyphens"
                 />
               </div>
-              <p className="mt-1 text-sm text-slate-500">
-                This will be your project's unique URL
-              </p>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Description *
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                placeholder="Tell people about your project..."
-                required
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Problem Area *
+                </label>
+                <textarea
+                  value={problemArea}
+                  onChange={(e) => setProblemArea(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  placeholder="What problem does this project solve? Who is it for?"
+                  required
+                />
+                <p className="mt-1 text-sm text-slate-500">
+                  Describe the core problem or need your project addresses
+                </p>
+              </div>
 
-            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Keywords (Tags)
+                </label>
+                <input
+                  type="text"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  placeholder="e.g., productivity, automation, mobile, AI"
+                />
+                <p className="mt-1 text-sm text-slate-500">
+                  Separate multiple keywords with commas
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Category *
@@ -202,7 +384,92 @@ export default function ProjectForm() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Status *
+                  Hero Image URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={heroImage}
+                  onChange={(e) => setHeroImage(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  placeholder="https://example.com/image.jpg"
+                />
+                <p className="mt-1 text-sm text-slate-500">
+                  Enter a URL to an image hosted online
+                </p>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="collaboration"
+                    checked={collaborationOpen}
+                    onChange={(e) => setCollaborationOpen(e.target.checked)}
+                    className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="collaboration" className="flex items-center space-x-2 cursor-pointer">
+                      <span className="font-medium text-slate-900">Open to Collaboration</span>
+                      <div className="group relative">
+                        <Info className="w-4 h-4 text-slate-400" />
+                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-slate-900 text-white text-xs rounded shadow-lg z-10">
+                          When enabled, visitors can see you're open to collaborators and may reach out to discuss working together
+                        </div>
+                      </div>
+                    </label>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Let others know if you're looking for collaborators on this project
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  URL Slug *
+                </label>
+                <div className="flex items-center space-x-2">
+                  <span className="text-slate-500">projecthub.com/project/</span>
+                  <input
+                    type="text"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="my-awesome-project"
+                    required
+                    pattern="[a-z0-9-]+"
+                    title="Only lowercase letters, numbers, and hyphens"
+                  />
+                </div>
+                <p className="mt-1 text-sm text-slate-500">
+                  This will be your project's unique URL
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Project Description *
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={6}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  placeholder="Provide a detailed description of your project, its features, and what makes it unique..."
+                  required
+                />
+                <p className="mt-1 text-sm text-slate-500">
+                  Tell people about your project's execution, features, and current status
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Project Status *
                 </label>
                 <select
                   value={status}
@@ -210,38 +477,88 @@ export default function ProjectForm() {
                   className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none capitalize"
                   required
                 >
-                  <option value="active">Active</option>
-                  <option value="paused">Paused</option>
-                  <option value="completed">Completed</option>
+                  <option value="active">Active - Currently working on it</option>
+                  <option value="paused">Paused - Temporarily on hold</option>
+                  <option value="completed">Completed - Finished and launched</option>
                 </select>
               </div>
             </div>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Hero Image URL (Optional)
-              </label>
-              <input
-                type="url"
-                value={heroImage}
-                onChange={(e) => setHeroImage(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                placeholder="https://example.com/image.jpg"
-              />
-              <p className="mt-1 text-sm text-slate-500">
-                Enter a URL to an image hosted online
-              </p>
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Project Preview</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <span className="font-medium text-slate-700">Name:</span>{' '}
+                    <span className="text-slate-900">{name}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-slate-700">Category:</span>{' '}
+                    <span className="text-slate-900 capitalize">{category}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-slate-700">Problem Area:</span>{' '}
+                    <span className="text-slate-900">{problemArea}</span>
+                  </div>
+                  {keywords && (
+                    <div>
+                      <span className="font-medium text-slate-700">Keywords:</span>{' '}
+                      <span className="text-slate-900">{keywords}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium text-slate-700">Collaboration:</span>{' '}
+                    <span className="text-slate-900">
+                      {collaborationOpen ? 'Open to collaborators' : 'Not seeking collaborators'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="publish"
+                    checked={isPublished}
+                    onChange={(e) => setIsPublished(e.target.checked)}
+                    className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="publish" className="font-medium text-slate-900 cursor-pointer">
+                      Publish Project
+                    </label>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Make your project visible to the public. You can unpublish it later from your dashboard.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-800">
+                  <strong>Note:</strong> If you don't publish now, your project will be saved as a draft. You can publish it later from your dashboard.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between space-x-4 pt-6 mt-6 border-t border-slate-200">
+            <div className="flex items-center space-x-4">
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Back
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center space-x-4 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-5 h-5" />
-                <span>{loading ? 'Saving...' : isEdit ? 'Update Project' : 'Create Project'}</span>
-              </button>
+            <div className="flex items-center space-x-4">
               <Link
                 to="/dashboard"
                 className="flex items-center space-x-2 px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
@@ -249,8 +566,29 @@ export default function ProjectForm() {
                 <X className="w-5 h-5" />
                 <span>Cancel</span>
               </Link>
+
+              {currentStep < 3 ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={loading}
+                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>{loading ? 'Saving...' : 'Save & Continue'}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={loading}
+                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="w-5 h-5" />
+                  <span>{loading ? 'Saving...' : isPublished ? 'Publish Project' : 'Save as Draft'}</span>
+                </button>
+              )}
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
