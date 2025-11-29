@@ -21,6 +21,7 @@ import { Project, Review } from '../types';
 import { format } from 'date-fns';
 import DiscoverProjects from '../components/DiscoverProjects';
 import MessagesView from './MessagesView';
+import CreatorWelcomeScreen from '../components/CreatorWelcomeScreen';
 
 export default function Dashboard() {
   const { user, profile, activeView, setActiveView, signOut, unreadMessageCount, refreshUnreadCount } = useAuth();
@@ -38,8 +39,12 @@ export default function Dashboard() {
     }
 
     if (profile) {
-      if (activeView === 'creator' && profile.is_creator) {
-        loadCreatorData();
+      if (activeView === 'creator') {
+        if (profile.is_creator) {
+          loadCreatorData();
+        } else {
+          setLoading(false);
+        }
       } else if (activeView === 'user') {
         loadUserData();
       } else if (activeView === 'messages') {
@@ -178,16 +183,12 @@ export default function Dashboard() {
           </button>
 
           <button
-            onClick={() => profile?.is_creator && setActiveView('creator')}
-            disabled={!profile?.is_creator}
+            onClick={() => setActiveView('creator')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-              activeView === 'creator' && profile?.is_creator
+              activeView === 'creator'
                 ? 'bg-blue-50 text-blue-600'
-                : !profile?.is_creator
-                ? 'text-slate-400 cursor-not-allowed'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
-            title={!profile?.is_creator ? 'Create a project to unlock Creator View' : ''}
           >
             <Briefcase className="w-5 h-5" />
             <span className="font-medium">Creator View</span>
@@ -342,7 +343,7 @@ export default function Dashboard() {
                 <DiscoverProjects />
               </div>
             </>
-          ) : (
+          ) : profile?.is_creator ? (
             <>
               <div className="mb-8">
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">Creator Dashboard</h1>
@@ -501,6 +502,8 @@ export default function Dashboard() {
                 )}
               </div>
             </>
+          ) : (
+            <CreatorWelcomeScreen />
           )}
         </div>
       </main>
