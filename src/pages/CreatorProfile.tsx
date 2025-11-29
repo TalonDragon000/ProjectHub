@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Mail, MessageCircle, Star, Briefcase, Grid3x3, ArrowLeft, Settings, User } from 'lucide-react';
+import { Mail, MessageCircle, Star, Briefcase, Grid3x3, ArrowLeft, Settings, User, DollarSign, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CreatorProfile as CreatorProfileType, Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,13 +28,13 @@ export default function CreatorProfile() {
 
   const loadCreatorProfile = async () => {
     const { data: creatorData, error } = await supabase
-      .from('creator_profiles')
+      .from('profiles')
       .select(`
         *,
         user_id
       `)
       .eq('username', username)
-      .single();
+      .maybeSingle();
 
     if (error || !creatorData) {
       setLoading(false);
@@ -44,7 +44,7 @@ export default function CreatorProfile() {
     const { data: projectsData } = await supabase
       .from('projects')
       .select('id, average_rating, total_reviews')
-      .eq('creator_id', creatorData.id)
+      .eq('user_id', creatorData.id)
       .eq('is_published', true);
 
     const totalProjects = projectsData?.length || 0;
@@ -52,18 +52,6 @@ export default function CreatorProfile() {
       ? projectsData.reduce((sum, p) => sum + p.average_rating, 0) / projectsData.length
       : 0;
     const totalReviews = projectsData?.reduce((sum, p) => sum + p.total_reviews, 0) || 0;
-
-    if (creatorData.email_public) {
-      const { data: userData } = await supabase
-        .from('auth.users')
-        .select('email')
-        .eq('id', creatorData.user_id)
-        .single();
-
-      if (userData) {
-        creatorData.email = userData.email;
-      }
-    }
 
     setCreator({
       ...creatorData,
@@ -81,7 +69,7 @@ export default function CreatorProfile() {
     let query = supabase
       .from('projects')
       .select('*')
-      .eq('creator_id', creator.id)
+      .eq('user_id', creator.id)
       .eq('is_published', true);
 
     switch (sortBy) {
@@ -203,14 +191,24 @@ export default function CreatorProfile() {
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">{creator.display_name}</h1>
                 <p className="text-lg text-slate-600 mb-4">@{creator.username}</p>
 
-                {creator.email_public && creator.email && (
-                  <div className="flex items-center justify-center md:justify-start space-x-2 text-slate-600 mb-4">
-                    <Mail className="w-4 h-4" />
-                    <span className="text-sm">{creator.email}</span>
-                  </div>
+                {creator.bio && (
+                  <p className="text-slate-600 mb-4">{creator.bio}</p>
                 )}
 
                 <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                  {creator.payment_provider && creator.payment_username && (
+                    <a
+                      href={`https://${creator.payment_provider === 'paypal' ? 'paypal.me' : creator.payment_provider === 'ko-fi' ? 'ko-fi.com' : 'buy.stripe.com'}/${creator.payment_username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      <span>Support Creator</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+
                   <button
                     disabled
                     className="flex items-center space-x-2 px-4 py-2 bg-slate-100 text-slate-400 rounded-lg cursor-not-allowed"
@@ -232,6 +230,18 @@ export default function CreatorProfile() {
                 </div>
               </div>
             </div>
+
+            {creator.open_to_beta_test && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-2 text-green-700">
+                  <MessageCircle className="w-5 h-5" />
+                  <span className="font-medium">Open to Beta Testing</span>
+                </div>
+                <p className="text-sm text-green-600 mt-1">
+                  This creator is available to test and provide feedback on new features and projects.
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-4 mt-8 pt-8 border-t border-slate-200">
               <div className="text-center">
@@ -262,13 +272,6 @@ export default function CreatorProfile() {
             </div>
           </div>
         </div>
-
-        {creator.bio && (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 mb-8">
-            <h2 className="text-xl font-bold text-slate-900 mb-4">About</h2>
-            <p className="text-slate-700 whitespace-pre-wrap">{creator.bio}</p>
-          </div>
-        )}
 
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
