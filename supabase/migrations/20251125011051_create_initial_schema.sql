@@ -3,7 +3,7 @@
 
   ## Overview
   This migration creates the complete database schema for a Yelp-style project review platform
-  for indie builders and freelancers to showcase projects, collect feedback, and manage funding.
+  for startup builders and freelancers to showcase projects, collect feedback, and manage funding.
 
   ## New Tables
 
