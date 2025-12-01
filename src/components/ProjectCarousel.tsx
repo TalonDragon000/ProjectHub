@@ -34,11 +34,9 @@ export default function ProjectCarousel({ projects }: ProjectCarouselProps) {
   return (
     <div className="relative">
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-6">
+        <div className="flex flex-wrap gap-6 mb-8">
           {projects.map((project) => (
-            <div key={project.id} className="flex-none">
-              <ProjectCard project={project} />
-            </div>
+            <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       </div>

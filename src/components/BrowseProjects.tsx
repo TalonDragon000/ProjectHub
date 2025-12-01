@@ -27,8 +27,8 @@
       }
       if (projects.length === 0) {
         return (
-          <div className="text-center py-12 text-slate-500">
-            {emptyMessage}
+            <div className="text-center py-12 text-slate-500">
+            No projects available yet. Be the first to create one!
           </div>
         );
       }
