@@ -6,6 +6,7 @@ import { Project, Review, QuickFeedback, Feature, Milestone, DonationGoal, Proje
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import IdeaTab from '../components/IdeaTab';
+import NavBar from '../components/NavBar';
 
 export default function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -261,18 +262,10 @@ export default function ProjectPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="text-xl font-bold text-slate-900">
-              ProjectHub
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+      <NavBar />
+      
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <section id="project-header" className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
           <div className="h-64 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             {project.hero_image ? (
               <img src={project.hero_image} alt={project.name} className="w-full h-full object-cover" />
@@ -336,9 +329,9 @@ export default function ProjectPage() {
               </div>
             )}
           </div>
-        </div>
+        </section>
 
-        <div className="mb-8 bg-white rounded-xl shadow-lg overflow-hidden">
+        <section id="project-tabs" className="mb-8 bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="border-b border-slate-200">
             <div className="flex space-x-1 px-6">
               <button
@@ -564,11 +557,11 @@ export default function ProjectPage() {
               </div>
             )}
           </div>
-        </div>
+          </section>
 
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-3">
+          <section id="project-overview" className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <section id="project-support" className="lg:col-span-3">
               {creator?.payment_provider && creator?.payment_username && (
                 <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-green-200">
                 <div className="flex items-center space-x-2 mb-4">
@@ -590,9 +583,10 @@ export default function ProjectPage() {
                 </a>
               </div>
             )}
+            </section>
 
             {features.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
+              <section id="project-features" className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-xl font-bold text-slate-900 mb-4">Roadmap</h3>
                 <div className="space-y-3">
                   {features.slice(0, 5).map((feature) => (
@@ -608,11 +602,11 @@ export default function ProjectPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
             {donationGoals.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
+              <section id="project-donation-goals" className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-xl font-bold text-slate-900 mb-4">Support This Project</h3>
                 {donationGoals.map((goal) => (
                   <div key={goal.id} className="mb-4">
@@ -634,12 +628,11 @@ export default function ProjectPage() {
                   <Heart className="w-5 h-5" />
                   <span>Support Project</span>
                 </button>
-              </div>
+              </section>
             )}
-            </div>
-          </div>
+          </section>
         )}
-      </div>
+      </section>
     </div>
   );
 }

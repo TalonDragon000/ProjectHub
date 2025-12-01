@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import { Profile, Review, Project } from '../types';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
+import ProjectCard from '../components/ProjectCard';
+import NavBar from '../components/NavBar';
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -163,35 +165,10 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="text-xl font-bold text-slate-900">
-              ProjectHub
-            </Link>
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <Link
-                  to="/dashboard"
-                  className="px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors"
-                >
-                  Dashboard
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  className="px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors"
-                >
-                  Login
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden mb-8">
+      <NavBar />
+      
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <section id="profile-header" className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden mb-8">
           <div className="p-8">
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-start space-x-6">
@@ -290,10 +267,10 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-        </div>
+        </section>
 
         {profile.is_creator && (
-          <div className="flex space-x-2 mb-6">
+          <section id="profile-tabs" className="flex space-x-2 mb-6">
             <button
               onClick={() => setActiveTab('reviews')}
               className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
@@ -316,11 +293,11 @@ export default function ProfilePage() {
               <Briefcase className="w-5 h-5 inline-block mr-2" />
               Projects ({projects.length})
             </button>
-          </div>
+          </section>
         )}
 
         {activeTab === 'reviews' && (
-          <div className="bg-white rounded-xl shadow-lg border border-slate-200">
+          <section id="profile-reviews" className="bg-white rounded-xl shadow-lg border border-slate-200">
             <div className="p-6 border-b border-slate-200 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
                 Reviews by {profile.display_name}
@@ -350,10 +327,10 @@ export default function ProfilePage() {
                   <div key={review.id} className="p-6 hover:bg-slate-50 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <Link
-                        to={`/project/${review.project?.slug}`}
+                        to={`/project/${review.project_slug}`}
                         className="text-lg font-bold text-slate-900 hover:text-blue-600 transition-colors"
                       >
-                        {review.project?.name}
+                        {review.project_slug}
                       </Link>
                       <div className="flex items-center text-yellow-500">
                         {[...Array(review.rating)].map((_, i) => (
@@ -373,11 +350,11 @@ export default function ProfilePage() {
                 ))}
               </div>
             )}
-          </div>
+          </section>
         )}
 
         {activeTab === 'projects' && profile.is_creator && (
-          <div className="bg-white rounded-xl shadow-lg border border-slate-200">
+          <section id="profile-projects" className="bg-white rounded-xl shadow-lg border border-slate-200">
             <div className="p-6 border-b border-slate-200">
               <h2 className="text-xl font-bold text-slate-900">
                 Projects by {profile.display_name}
@@ -394,51 +371,17 @@ export default function ProfilePage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                 {projects.map((project) => (
-                  <Link
-                    key={project.id}
-                    to={`/project/${project.slug}`}
-                    className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
-                  >
-                    {project.hero_image && (
-                      <img
-                        src={project.hero_image}
-                        alt={project.name}
-                        className="w-full h-48 object-cover"
-                      />
-                    )}
-                    <div className="p-5">
-                      <h3 className="text-lg font-bold text-slate-900 mb-2">
-                        {project.name}
-                      </h3>
-                      <p className="text-slate-600 text-sm mb-3 line-clamp-2">
-                        {project.description}
-                      </p>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center text-yellow-500">
-                          <Star className="w-4 h-4 fill-current mr-1" />
-                          <span className="font-medium text-slate-900">
-                            {project.average_rating.toFixed(1)}
-                          </span>
-                          <span className="text-slate-500 ml-1">
-                            ({project.total_reviews})
-                          </span>
-                        </div>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded capitalize">
-                          {project.category}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
+                  <ProjectCard key={project.id} project={project} />
                 ))}
               </div>
             )}
-          </div>
+          </section>
         )}
-      </div>
+      </section>
 
       {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+        <section id="profile-login-modal" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <section className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
             <button
               onClick={() => setShowLoginModal(false)}
               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
@@ -471,8 +414,8 @@ export default function ProfilePage() {
                 Maybe Later
               </button>
             </div>
-          </div>
-        </div>
+          </section>
+        </section>
       )}
     </div>
   );

@@ -326,7 +326,7 @@ export default function CreatorProfile() {
                     <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
                       {project.name}
                     </h3>
-                    <p className="text-slate-600 line-clamp-2 text-sm">{project.description}</p>
+                    <p className="text-slate-600 text-sm line-clamp-2 h-10 overflow-hidden">{project.description}</p>
                   </div>
                 </div>
               ))}

@@ -6,6 +6,8 @@ import { Project, Profile } from '../types';
 import ProjectCarousel from '../components/ProjectCarousel';
 import CreatorCard from '../components/CreatorCard';
 import { useAuth } from '../contexts/AuthContext';
+import BrowseProjects from '../components/BrowseProjects';
+import NavBar from '../components/NavBar';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -164,36 +166,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <Grid3x3 className="w-8 h-8 text-blue-600" />
-              <span className="text-xl font-bold text-slate-900">ProjectHub</span>
-            </Link>
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <Link
-                  to="/dashboard"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Dashboard
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Login
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
+      <section id="hero" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4x text-center">
           <h1 className="text-5xl font-bold text-slate-900 mb-6">
             Discover & Support
             <span className="block text-blue-600">Startup Projects</span>
@@ -202,7 +178,7 @@ export default function Home() {
             Find amazing projects built by solo creators and freelancers. Leave reviews, provide feedback, and support their work.
           </p>
 
-          <div className="relative max-w-2xl mx-auto">
+          <div id="search-container" className="relative max-w-2xl mx-auto">
             <div className="flex items-center bg-white rounded-2xl shadow-xl p-4 border-2 border-slate-200 focus-within:border-blue-500 transition-all">
               <Search className="w-6 h-6 text-slate-400 ml-2" />
               <input
@@ -286,7 +262,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
+      <section id="featured-projects" className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
@@ -298,7 +274,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section id="newest-projects" className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
@@ -310,7 +286,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
+      <section id="featured-creators" className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
@@ -335,7 +311,7 @@ export default function Home() {
               ))}
             </div>
           ) : featuredCreators.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
               {featuredCreators.map((creator) => (
                 <CreatorCard key={creator.id} creator={creator} />
               ))}
@@ -350,7 +326,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section id="browse-by-category" className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-slate-900 mb-8">Browse by Category</h2>
           <div className="flex flex-wrap gap-3 mb-8">
@@ -370,11 +346,11 @@ export default function Home() {
           </div>
 
           {categoryLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 animate-pulse">
                   <div className="h-48 bg-slate-200"></div>
-                  <div className="p-6 space-y-3">
+                  <div className="p-3 space-y-3">
                     <div className="h-4 bg-slate-200 rounded w-1/3"></div>
                     <div className="h-6 bg-slate-200 rounded w-2/3"></div>
                     <div className="h-4 bg-slate-200 rounded w-full"></div>
@@ -383,43 +359,7 @@ export default function Home() {
               ))}
             </div>
           ) : categoryProjects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categoryProjects.map((project) => (
-                <div
-                  key={project.id}
-                  onClick={() => navigate(`/project/${project.slug}`)}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer group"
-                >
-                  <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    {project.hero_image ? (
-                      <img src={project.hero_image} alt={project.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-6xl font-bold text-white opacity-50">
-                        {project.name.charAt(0)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full capitalize">
-                        {project.category}
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-bold text-slate-900">
-                          {project.average_rating.toFixed(1)}
-                        </span>
-                        <span className="text-sm text-slate-500">({project.total_reviews})</span>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
-                      {project.name}
-                    </h3>
-                    <p className="text-slate-600 line-clamp-2 text-sm">{project.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <BrowseProjects projects={categoryProjects} />
           ) : (
             <div className="text-center py-16">
               <div className="inline-block p-6 bg-slate-100 rounded-full mb-4">
@@ -434,7 +374,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="bg-slate-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+      <footer id="footer" className="bg-slate-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Grid3x3 className="w-8 h-8" />

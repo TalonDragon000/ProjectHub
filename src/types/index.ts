@@ -18,6 +18,7 @@ export interface Project {
 export interface Review {
   id: string;
   project_id: string;
+  project_slug: string;
   user_id: string | null;
   rating: number;
   title: string;
