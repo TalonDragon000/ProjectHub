@@ -21,7 +21,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Project, Review } from '../types';
 import { format } from 'date-fns';
-import DiscoverProjects from '../components/DiscoverProjects';
+import SearchBar from '../components/SearchBar';
+import BrowseProjects from '../components/BrowseProjects';
 import MessagesView from './MessagesView';
 import CreatorWelcomeScreen from '../components/CreatorWelcomeScreen';
 
@@ -34,6 +35,12 @@ export default function Dashboard() {
   const [userStats, setUserStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // User view browse projects state
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [categoryProjects, setCategoryProjects] = useState<Project[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<'rating' | 'reviews' | 'newest' | 'name'>('rating');
 
   useEffect(() => {
     if (!user) {
@@ -50,6 +57,7 @@ export default function Dashboard() {
         }
       } else if (activeView === 'user') {
         loadUserData();
+        loadCategoryProjects();
       } else if (activeView === 'messages') {
         setLoading(false);
       }
@@ -58,6 +66,12 @@ export default function Dashboard() {
       setLoading(false);
     }
   }, [user, profile, activeView]);
+
+  useEffect(() => {
+    if (activeView === 'user') {
+      loadCategoryProjects();
+    }
+  }, [selectedCategory, sortBy, activeView]);
 
   const loadUserData = async () => {
     if (!profile) return;
@@ -92,6 +106,47 @@ export default function Dashboard() {
     }
 
     setLoading(false);
+  };
+
+  const loadCategoryProjects = async () => {
+    setCategoryLoading(true);
+    let query = supabase
+      .from('projects')
+      .select('*')
+      .eq('is_published', true);
+
+    if (selectedCategory !== 'all') {
+      query = query.eq('category', selectedCategory);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'rating':
+        query = query.order('average_rating', { ascending: false });
+        break;
+      case 'reviews':
+        query = query.order('total_reviews', { ascending: false });
+        break;
+      case 'newest':
+        query = query.order('created_at', { ascending: false });
+        break;
+      case 'name':
+        query = query.order('name', { ascending: true });
+        break;
+      default:
+        query = query.order('average_rating', { ascending: false });
+    }
+
+    const { data } = await query.limit(12);
+
+    if (data) {
+      let sortedData = [...data];
+      if (sortBy === 'name') {
+        sortedData.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      setCategoryProjects(sortedData);
+    }
+    setCategoryLoading(false);
   };
 
   const loadCreatorData = async () => {
@@ -379,9 +434,22 @@ export default function Dashboard() {
                 </div>
               )}
 
+              <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 mb-8">
+                <SearchBar placeholder="Search for projects or creators..." />
+              </div>
+
               <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Browse Projects</h2>
-                <DiscoverProjects />
+                <BrowseProjects
+                  projects={categoryProjects}
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={setSelectedCategory}
+                  categoryLoading={categoryLoading}
+                  title="Browse Projects"
+                  titleLevel="h3"
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  showSortBy={true}
+                />
               </div>
             </>
           ) : profile?.is_creator ? (

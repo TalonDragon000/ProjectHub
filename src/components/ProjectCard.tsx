@@ -5,10 +5,9 @@ import { cardFlexClasses } from '../utils/cardStyles';
 
 interface ProjectCardProps {
   project: Project;
-  showCreator?: boolean;
 }
 
-export default function ProjectCard({ project, showCreator = true }: ProjectCardProps) {
+export default function ProjectCard({ project }: ProjectCardProps) {
   return (
       <Link
       to={`/project/${project.slug}`}
@@ -50,13 +49,6 @@ export default function ProjectCard({ project, showCreator = true }: ProjectCard
         <p className="text-slate-600 text-sm line-clamp-2 min-h-[2.5rem] flex-1">
           {project.description}
         </p>
-
-        {/* Optional Creator */}
-        {showCreator && project.profile && (
-          <span className="text-sm text-slate-500 mt-2">
-            by {project.profile.display_name}
-          </span>
-        )}
       </div>
       </Link>
   );
