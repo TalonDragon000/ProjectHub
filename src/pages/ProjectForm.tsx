@@ -176,7 +176,8 @@ export default function ProjectForm() {
               category,
               status: 'active',
               hero_image: heroImage || null,
-              user_id: profile?.id || '',
+              user_id: profile?.id {
+              ,
               is_published: false,
             },
           ])
