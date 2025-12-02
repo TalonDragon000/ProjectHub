@@ -199,7 +199,10 @@ export default function ProjectForm() {
               problem_area: problemArea,
               keywords: keywordArray,
               collaboration_open: collaborationOpen,
-            },
+              updated_at: new Date().toISOString(),
+            }, {
+                  onConflict: 'project_id'
+            }
           ]);
 
         if (ideaError) throw ideaError;
