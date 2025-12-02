@@ -23,6 +23,9 @@ export default function ProjectForm() {
   const [status, setStatus] = useState<'active' | 'paused' | 'completed'>('active');
   const [heroImage, setHeroImage] = useState('');
   const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [imageFileSize, setImageFileSize] = useState<number | null>(null);
+  const [dimensionWarning, setDimensionWarning] = useState('');
   const [isPublished, setIsPublished] = useState(false);
 
   const [problemArea, setProblemArea] = useState('');
@@ -95,6 +98,32 @@ export default function ProjectForm() {
 
     setUploadingHeroImage(true);
     setError('');
+    setDimensionWarning('');
+    setImageFileSize(file.size);
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.src = e.target?.result as string;
+      img.onload = () => {
+        const width = img.width;
+        const height = img.height;
+        setImageDimensions({ width, height });
+
+        const aspectRatio = width / height;
+
+        if (width < 800 || height < 420) {
+          setDimensionWarning('Image is smaller than recommended minimum (800 x 420px). Quality may be reduced.');
+        } else if (aspectRatio < 1.5 || aspectRatio > 2.5) {
+          setDimensionWarning('Image aspect ratio is outside recommended range (1.5:1 to 2.5:1). It may be cropped unexpectedly.');
+        } else if (file.size > 1024 * 1024) {
+          setDimensionWarning('Image file size is large (>1MB). Consider optimizing with tools like TinyPNG or Squoosh for faster loading.');
+        }
+      };
+    };
+
+    reader.readAsDataURL(file);
 
     try {
       const fileExt = file.name.split('.').pop() || 'png';
@@ -424,9 +453,20 @@ export default function ProjectForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Hero Image URL (Optional)
-                </label>
+                <div className="flex items-center space-x-2 mb-2">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Hero Image URL (Optional)
+                  </label>
+                  <div className="group relative">
+                    <Info className="w-4 h-4 text-slate-400 cursor-help" />
+                    <div className="absolute left-0 top-6 w-80 bg-slate-900 text-white text-xs rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 shadow-xl">
+                      <p className="font-semibold mb-1">Recommended Dimensions:</p>
+                      <p className="mb-2">1200 x 630 pixels (1.9:1 aspect ratio)</p>
+                      <p className="text-slate-300 text-xs mb-2">Your image adapts to different views: card thumbnails, page banners, and mobile displays.</p>
+                      <p className="text-slate-300 text-xs">Keep important content centered to avoid edge cropping.</p>
+                    </div>
+                  </div>
+                </div>
                 <input
                   type="url"
                   value={heroImage}
@@ -448,20 +488,58 @@ export default function ProjectForm() {
                     disabled={uploadingHeroImage}
                     className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                   />
-                  <p className="text-xs text-slate-500">
-                    Supported formats: JPG, PNG (max 5MB). Uploaded files are stored securely via Supabase Storage.
-                  </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
+                    <p className="font-semibold text-blue-900">📐 Recommended: 1200 x 630px (1.9:1 aspect ratio)</p>
+                    <p>• Alternative: 1920 x 1080px (16:9 for video projects)</p>
+                    <p>• Minimum: 800 x 420px</p>
+                    <p>• Formats: JPG (photos), PNG (graphics with text)</p>
+                    <p>• Max size: 5MB | Recommended: under 500KB for faster loading</p>
+                    <p className="text-slate-600 pt-1">💡 Tip: Keep important content centered. Images use object-cover and may be cropped at edges.</p>
+                  </div>
                   {uploadingHeroImage && (
                     <p className="text-sm text-blue-600">Uploading image...</p>
                   )}
+                  {dimensionWarning && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                      <p className="font-medium">⚠️ Dimension Notice</p>
+                      <p className="text-xs mt-1">{dimensionWarning}</p>
+                    </div>
+                  )}
                   {heroImage && (
                     <div className="mt-3">
-                      <p className="text-sm font-medium text-slate-700 mb-2">Preview</p>
-                      <img
-                        src={heroImage}
-                        alt="Hero preview"
-                        className="w-full h-48 object-cover rounded-lg border border-slate-200"
-                      />
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-slate-700">Preview</p>
+                        {imageDimensions && (
+                          <div className="flex items-center space-x-3 text-xs text-slate-600">
+                            <span className="bg-slate-100 px-2 py-1 rounded">
+                              {imageDimensions.width} x {imageDimensions.height}px
+                            </span>
+                            {imageFileSize && (
+                              <span className="bg-slate-100 px-2 py-1 rounded">
+                                {(imageFileSize / 1024).toFixed(0)}KB
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs text-slate-600 mb-1">Card View (320 x 192px)</p>
+                          <img
+                            src={heroImage}
+                            alt="Card preview"
+                            className="w-80 h-48 object-cover rounded-lg border border-slate-200"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-600 mb-1">Page Banner (full width x 256px)</p>
+                          <img
+                            src={heroImage}
+                            alt="Banner preview"
+                            className="w-full h-64 object-cover rounded-lg border border-slate-200"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
