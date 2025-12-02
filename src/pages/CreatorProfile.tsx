@@ -301,7 +301,7 @@ export default function CreatorProfile() {
                   onClick={() => navigate(`/project/${project.slug}`)}
                   className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer group"
                 >
-                  <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <div className="h-card-hero-golden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                     {project.hero_image ? (
                       <img src={project.hero_image} alt={project.name} className="w-full h-full object-cover" />
                     ) : (
@@ -310,7 +310,7 @@ export default function CreatorProfile() {
                       </span>
                     )}
                   </div>
-                  <div className="p-6">
+                  <div className="p-golden-sm">
                     <div className="flex items-center justify-between mb-2">
                       <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full capitalize">
                         {project.category}

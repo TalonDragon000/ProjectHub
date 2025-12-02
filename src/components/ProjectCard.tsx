@@ -11,10 +11,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   return (
       <Link
       to={`/project/${project.slug}`}
-      className={`${cardFlexClasses} w-80`}
+      className={`${cardFlexClasses} w-card-golden`}
     >
-      {/* Hero Image - Fixed Height */}
-      <div className="h-48 w-80 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+      {/* Hero Image - Golden Ratio Dimensions */}
+      <div className="h-card-hero-golden w-card-golden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
         {project.hero_image ? (
           <img src={project.hero_image} alt={project.name} className="w-full h-full object-cover" />
         ) : (
@@ -25,9 +25,9 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       </div>
 
       {/* Content - Flex to fill remaining space */}
-      <div className="p-6 flex-1 flex flex-col">
+      <div className="p-golden-sm flex-1 flex flex-col">
         {/* Category & Rating Row */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-3">
           <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full capitalize">
             {project.category}
           </span>

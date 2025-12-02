@@ -1,9 +1,10 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Save, X, Lightbulb, FileText, Rocket, Info } from 'lucide-react';
+import { Save, X, Lightbulb, FileText, Rocket, Info, Award } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import NavBar from '../components/NavBar';
+import { validateHeroImageDimensions, formatDimensions } from '../utils/goldenRatio';
 
 const HERO_IMAGE_BUCKET = 'project-hero-images';
 
@@ -26,6 +27,7 @@ export default function ProjectForm() {
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [imageFileSize, setImageFileSize] = useState<number | null>(null);
   const [dimensionWarning, setDimensionWarning] = useState('');
+  const [imageQuality, setImageQuality] = useState<'perfect' | 'excellent' | 'good' | 'acceptable' | 'poor' | null>(null);
   const [isPublished, setIsPublished] = useState(false);
 
   const [problemArea, setProblemArea] = useState('');
@@ -111,14 +113,15 @@ export default function ProjectForm() {
         const height = img.height;
         setImageDimensions({ width, height });
 
-        const aspectRatio = width / height;
+        const validation = validateHeroImageDimensions(width, height);
+        setImageQuality(validation.quality);
 
-        if (width < 800 || height < 420) {
-          setDimensionWarning('Image is smaller than recommended minimum (800 x 420px). Quality may be reduced.');
-        } else if (aspectRatio < 1.5 || aspectRatio > 2.5) {
-          setDimensionWarning('Image aspect ratio is outside recommended range (1.5:1 to 2.5:1). It may be cropped unexpectedly.');
+        if (validation.warning) {
+          setDimensionWarning(validation.warning);
         } else if (file.size > 1024 * 1024) {
           setDimensionWarning('Image file size is large (>1MB). Consider optimizing with tools like TinyPNG or Squoosh for faster loading.');
+        } else {
+          setDimensionWarning('');
         }
       };
     };
@@ -488,13 +491,22 @@ export default function ProjectForm() {
                     disabled={uploadingHeroImage}
                     className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                   />
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
-                    <p className="font-semibold text-blue-900">📐 Recommended: 1200 x 630px (1.9:1 aspect ratio)</p>
-                    <p>• Alternative: 1920 x 1080px (16:9 for video projects)</p>
-                    <p>• Minimum: 800 x 420px</p>
-                    <p>• Formats: JPG (photos), PNG (graphics with text)</p>
-                    <p>• Max size: 5MB | Recommended: under 500KB for faster loading</p>
-                    <p className="text-slate-600 pt-1">💡 Tip: Keep important content centered. Images use object-cover and may be cropped at edges.</p>
+                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 text-xs text-slate-700 space-y-2">
+                    <p className="font-semibold text-blue-900 flex items-center space-x-2">
+                      <Award className="w-4 h-4 text-yellow-500" />
+                      <span>Golden Ratio Dimensions (1.62:1)</span>
+                    </p>
+                    <div className="space-y-1 pl-6">
+                      <p className="font-medium">✨ Recommended: 1296 x 800px (Perfect Golden Ratio)</p>
+                      <p>• Minimum: 648 x 400px (Golden Ratio)</p>
+                      <p>• Alternative: 1280 x 720px (16:9 for video projects)</p>
+                    </div>
+                    <div className="border-t border-blue-200 pt-2 space-y-1">
+                      <p>• Formats: JPG (photos), PNG (graphics with text)</p>
+                      <p>• Max size: 5MB | Recommended: under 500KB</p>
+                      <p>• All dimensions follow 4-point grid system</p>
+                    </div>
+                    <p className="text-slate-600 pt-1 border-t border-blue-200">💡 Tip: Golden ratio creates naturally pleasing proportions. Keep important content centered as images use object-cover.</p>
                   </div>
                   {uploadingHeroImage && (
                     <p className="text-sm text-blue-600">Uploading image...</p>
@@ -510,13 +522,28 @@ export default function ProjectForm() {
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-medium text-slate-700">Preview</p>
                         {imageDimensions && (
-                          <div className="flex items-center space-x-3 text-xs text-slate-600">
-                            <span className="bg-slate-100 px-2 py-1 rounded">
-                              {imageDimensions.width} x {imageDimensions.height}px
+                          <div className="flex items-center space-x-2 text-xs">
+                            <span className="bg-slate-100 px-2 py-1 rounded font-mono">
+                              {formatDimensions(imageDimensions.width, imageDimensions.height)}
                             </span>
                             {imageFileSize && (
                               <span className="bg-slate-100 px-2 py-1 rounded">
                                 {(imageFileSize / 1024).toFixed(0)}KB
+                              </span>
+                            )}
+                            {imageQuality && (
+                              <span className={`px-2 py-1 rounded font-medium ${
+                                imageQuality === 'perfect' ? 'bg-yellow-100 text-yellow-800' :
+                                imageQuality === 'excellent' ? 'bg-green-100 text-green-800' :
+                                imageQuality === 'good' ? 'bg-blue-100 text-blue-800' :
+                                imageQuality === 'acceptable' ? 'bg-orange-100 text-orange-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {imageQuality === 'perfect' && '⭐ Perfect'}
+                                {imageQuality === 'excellent' && '✓ Excellent'}
+                                {imageQuality === 'good' && 'Good'}
+                                {imageQuality === 'acceptable' && 'Acceptable'}
+                                {imageQuality === 'poor' && 'Poor'}
                               </span>
                             )}
                           </div>
@@ -524,19 +551,19 @@ export default function ProjectForm() {
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <p className="text-xs text-slate-600 mb-1">Card View (320 x 192px)</p>
+                          <p className="text-xs text-slate-600 mb-1">Card View (324 x 200px - Golden Ratio)</p>
                           <img
                             src={heroImage}
                             alt="Card preview"
-                            className="w-80 h-48 object-cover rounded-lg border border-slate-200"
+                            className="w-card-golden h-card-hero-golden object-cover rounded-lg border border-slate-200"
                           />
                         </div>
                         <div>
-                          <p className="text-xs text-slate-600 mb-1">Page Banner (full width x 256px)</p>
+                          <p className="text-xs text-slate-600 mb-1">Page Banner (full width x 400px - Golden Ratio)</p>
                           <img
                             src={heroImage}
                             alt="Banner preview"
-                            className="w-full h-64 object-cover rounded-lg border border-slate-200"
+                            className="w-full h-page-hero-golden object-cover rounded-lg border border-slate-200"
                           />
                         </div>
                       </div>

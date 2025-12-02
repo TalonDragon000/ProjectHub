@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --phi: 1.618;
+  --phi-inverse: 0.618;
+
+  --grid-unit: 4px;
+
+  --space-golden-xs: 10px;
+  --space-golden-sm: 16px;
+  --space-golden-md: 26px;
+  --space-golden-lg: 42px;
+  --space-golden-xl: 68px;
+  --space-golden-2xl: 110px;
+
+  --golden-sidebar: 38.2%;
+  --golden-content: 61.8%;
+
+  --hero-width-recommended: 1296px;
+  --hero-height-recommended: 800px;
+  --hero-ratio-recommended: 1.62;
+}
