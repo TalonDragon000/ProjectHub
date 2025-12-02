@@ -455,7 +455,7 @@ export default function ProjectForm() {
               <div>
                 <div className="flex items-center space-x-2 mb-2">
                   <label className="block text-sm font-medium text-slate-700">
-                    Hero Image URL (Optional)
+                    Hero Image URL
                   </label>
                 </div>
                 <input
