@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, MessageSquare, ExternalLink, Heart, TrendingUp, Calendar, DollarSign, User, Lightbulb, FileText } from 'lucide-react';
+import { Star, ExternalLink, Heart, TrendingUp, DollarSign, User, Lightbulb, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Project, Review, QuickFeedback, Feature, Milestone, DonationGoal, ProjectLink, Profile } from '../types';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import IdeaTab from '../components/IdeaTab';
+import IdeaSentiment from '../components/IdeaSentiment';
 import NavBar from '../components/NavBar';
 
 export default function ProjectPage() {
@@ -363,7 +364,20 @@ export default function ProjectPage() {
               <IdeaTab projectId={project.id} />
             ) : (
               <div className="space-y-8">
-                <div className="bg-white rounded-xl">
+                <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-xl p-8 border border-blue-200">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                      <Lightbulb className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900">Validate the Idea</h2>
+                  </div>
+                  <p className="text-slate-600 mb-6">
+                    Before diving into execution feedback, help the creator understand if their core concept resonates.
+                  </p>
+                  <IdeaSentiment projectId={project.id} compact={true} showDetails={false} />
+                </div>
+
+                <div className="bg-white rounded-xl p-8">
                   <h2 className="text-2xl font-bold text-slate-900 mb-6">Leave a Review</h2>
               {submitSuccess && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
