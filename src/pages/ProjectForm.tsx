@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Save, X, Lightbulb, FileText, Rocket, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import NavBar from '../components/NavBar';
+
+const HERO_IMAGE_BUCKET = 'project-hero-images';
 
 export default function ProjectForm() {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +22,7 @@ export default function ProjectForm() {
   const [category, setCategory] = useState('saas');
   const [status, setStatus] = useState<'active' | 'paused' | 'completed'>('active');
   const [heroImage, setHeroImage] = useState('');
+  const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
 
   const [problemArea, setProblemArea] = useState('');
@@ -78,6 +81,47 @@ export default function ProjectForm() {
         setKeywords(ideaData.keywords.join(', '));
         setCollaborationOpen(ideaData.collaboration_open);
       }
+    }
+  };
+
+  const handleHeroImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Please upload an image smaller than 5MB.');
+      return;
+    }
+
+    setUploadingHeroImage(true);
+    setError('');
+
+    try {
+      const fileExt = file.name.split('.').pop() || 'png';
+      const fileName = `${profile?.id || 'anonymous'}-${Date.now()}.${fileExt}`;
+      const filePath = `hero-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(HERO_IMAGE_BUCKET)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from(HERO_IMAGE_BUCKET).getPublicUrl(filePath);
+
+      if (!data?.publicUrl) {
+        throw new Error('Unable to retrieve uploaded image URL.');
+      }
+
+      setHeroImage(data.publicUrl);
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload hero image.');
+    } finally {
+      setUploadingHeroImage(false);
+      event.target.value = '';
     }
   };
 
@@ -384,8 +428,36 @@ export default function ProjectForm() {
                   placeholder="https://example.com/image.jpg"
                 />
                 <p className="mt-1 text-sm text-slate-500">
-                  Enter a URL to an image hosted online
+                  Enter a URL to an image hosted online or upload one below
                 </p>
+                <div className="mt-4 space-y-2">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Upload Hero Image
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleHeroImageUpload}
+                    disabled={uploadingHeroImage}
+                    className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Supported formats: JPG, PNG (max 5MB). Uploaded files are stored securely via Supabase Storage.
+                  </p>
+                  {uploadingHeroImage && (
+                    <p className="text-sm text-blue-600">Uploading image...</p>
+                  )}
+                  {heroImage && (
+                    <div className="mt-3">
+                      <p className="text-sm font-medium text-slate-700 mb-2">Preview</p>
+                      <img
+                        src={heroImage}
+                        alt="Hero preview"
+                        className="w-full h-48 object-cover rounded-lg border border-slate-200"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
