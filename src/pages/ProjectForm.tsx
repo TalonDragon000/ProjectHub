@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Save, X, Lightbulb, FileText, Rocket, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import NavBar from '../components/NavBar';
 
 export default function ProjectForm() {
   const { id } = useParams<{ id: string }>();
@@ -250,18 +251,7 @@ export default function ProjectForm() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/dashboard" className="text-xl font-bold text-slate-900">
-              ProjectHub
-            </Link>
-            <Link to="/dashboard" className="text-slate-600 hover:text-slate-900 transition-colors">
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
