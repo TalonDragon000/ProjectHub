@@ -113,10 +113,10 @@ export default function ProjectForm() {
 
         const aspectRatio = width / height;
 
-        if (width < 810 || height < 320) {
-          setDimensionWarning('Image is smaller than recommended minimum (810 x 320px). Quality may be reduced.');
-        } else if (aspectRatio < 2.0 || aspectRatio > 3.0) {
-          setDimensionWarning('Image aspect ratio is outside recommended range (2.0:1 to 3.0:1). It may be cropped unexpectedly.');
+        if (width < 800 || height < 420) {
+          setDimensionWarning('Image is smaller than recommended minimum (800 x 420px). Quality may be reduced.');
+        } else if (aspectRatio < 1.5 || aspectRatio > 2.5) {
+          setDimensionWarning('Image aspect ratio is outside recommended range (1.5:1 to 2.5:1). It may be cropped unexpectedly.');
         } else if (file.size > 1024 * 1024) {
           setDimensionWarning('Image file size is large (>1MB). Consider optimizing with tools like TinyPNG or Squoosh for faster loading.');
         }
@@ -461,9 +461,9 @@ export default function ProjectForm() {
                     <Info className="w-4 h-4 text-slate-400 cursor-help" />
                     <div className="absolute left-0 top-6 w-80 bg-slate-900 text-white text-xs rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 shadow-xl">
                       <p className="font-semibold mb-1">Recommended Dimensions:</p>
-                      <p className="mb-2">1296 x 512 pixels (2.53:1 aspect ratio)</p>
+                      <p className="mb-2">1200 x 630 pixels (1.9:1 aspect ratio)</p>
                       <p className="text-slate-300 text-xs mb-2">Your image adapts to different views: card thumbnails, page banners, and mobile displays.</p>
-                      <p className="text-slate-300 text-xs">Keep important content centered with safe padding from edges to ensure visibility across all screen sizes.</p>
+                      <p className="text-slate-300 text-xs">Keep important content centered to avoid edge cropping.</p>
                     </div>
                   </div>
                 </div>
@@ -489,11 +489,12 @@ export default function ProjectForm() {
                     className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                   />
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
-                    <p className="font-semibold text-blue-900">📐 Recommended: 1296 x 512px (2.53:1 aspect ratio)</p>
-                    <p>• Minimum: 810 x 320px</p>
+                    <p className="font-semibold text-blue-900">📐 Recommended: 1200 x 630px (1.9:1 aspect ratio)</p>
+                    <p>• Alternative: 1920 x 1080px (16:9 for video projects)</p>
+                    <p>• Minimum: 800 x 420px</p>
                     <p>• Formats: JPG (photos), PNG (graphics with text)</p>
                     <p>• Max size: 5MB | Recommended: under 500KB for faster loading</p>
-                    <p className="text-slate-600 pt-1">💡 Tip: Keep important content centered with safe padding from edges. Images use object-cover and may be cropped at edges depending on screen size.</p>
+                    <p className="text-slate-600 pt-1">💡 Tip: Keep important content centered. Images use object-cover and may be cropped at edges.</p>
                   </div>
                   {uploadingHeroImage && (
                     <p className="text-sm text-blue-600">Uploading image...</p>
@@ -523,11 +524,11 @@ export default function ProjectForm() {
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <p className="text-xs text-slate-600 mb-1">Card View (324 x 128px)</p>
+                          <p className="text-xs text-slate-600 mb-1">Card View (320 x 192px)</p>
                           <img
                             src={heroImage}
                             alt="Card preview"
-                            className="w-81 h-32 object-cover rounded-lg border border-slate-200"
+                            className="w-80 h-48 object-cover rounded-lg border border-slate-200"
                           />
                         </div>
                         <div>

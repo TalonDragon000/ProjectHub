@@ -11,10 +11,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   return (
       <Link
       to={`/project/${project.slug}`}
-      className={`${cardFlexClasses} w-81`}
+      className={`${cardFlexClasses} w-80`}
     >
       {/* Hero Image - Fixed Height */}
-      <div className="h-32 w-81 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+      <div className="h-48 w-80 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
         {project.hero_image ? (
           <img src={project.hero_image} alt={project.name} className="w-full h-full object-cover" />
         ) : (
