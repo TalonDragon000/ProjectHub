@@ -131,6 +131,11 @@ export default function ProjectForm() {
       return false;
     }
 
+    if (!profile?.id) {
+      setError('User profile not found. Please sign in again.');
+      return false;
+    }
+
     setLoading(true);
     setError('');
 
@@ -162,6 +167,8 @@ export default function ProjectForm() {
             keywords: keywordArray,
             collaboration_open: collaborationOpen,
             updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'project_id'
           });
 
         if (ideaError) throw ideaError;
@@ -176,8 +183,7 @@ export default function ProjectForm() {
               category,
               status: 'active',
               hero_image: heroImage || null,
-              user_id: profile?.id {
-              ,
+              user_id: profile.id,
               is_published: false,
             },
           ])
@@ -200,10 +206,7 @@ export default function ProjectForm() {
               problem_area: problemArea,
               keywords: keywordArray,
               collaboration_open: collaborationOpen,
-              updated_at: new Date().toISOString(),
-            }, {
-                  onConflict: 'project_id'
-            }
+            },
           ]);
 
         if (ideaError) throw ideaError;
