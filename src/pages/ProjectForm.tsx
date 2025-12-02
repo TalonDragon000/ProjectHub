@@ -457,15 +457,6 @@ export default function ProjectForm() {
                   <label className="block text-sm font-medium text-slate-700">
                     Hero Image URL (Optional)
                   </label>
-                  <div className="group relative">
-                    <Info className="w-4 h-4 text-slate-400 cursor-help" />
-                    <div className="absolute left-0 top-6 w-80 bg-slate-900 text-white text-xs rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 shadow-xl">
-                      <p className="font-semibold mb-1">Recommended Dimensions:</p>
-                      <p className="mb-2">1200 x 630 pixels (1.9:1 aspect ratio)</p>
-                      <p className="text-slate-300 text-xs mb-2">Your image adapts to different views: card thumbnails, page banners, and mobile displays.</p>
-                      <p className="text-slate-300 text-xs">Keep important content centered to avoid edge cropping.</p>
-                    </div>
-                  </div>
                 </div>
                 <input
                   type="url"
@@ -490,9 +481,8 @@ export default function ProjectForm() {
                   />
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
                     <p className="font-semibold text-blue-900">📐 Recommended: 1200 x 630px (1.9:1 aspect ratio)</p>
-                    <p>• Alternative: 1920 x 1080px (16:9 for video projects)</p>
                     <p>• Minimum: 800 x 420px</p>
-                    <p>• Formats: JPG (photos), PNG (graphics with text)</p>
+                    <p>• Formats: JPG, PNG, SVG</p>
                     <p>• Max size: 5MB | Recommended: under 500KB for faster loading</p>
                     <p className="text-slate-600 pt-1">💡 Tip: Keep important content centered. Images use object-cover and may be cropped at edges.</p>
                   </div>
