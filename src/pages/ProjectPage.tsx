@@ -268,7 +268,7 @@ export default function ProjectPage() {
         <section id="project-header" className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
           <div className="h-64 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             {project.hero_image ? (
-              <img src={project.hero_image} alt={project.name} className="w-full h-full object-cover" />
+              <img src={project.hero_image} alt={project.name} className="w-full object-cover" />
             ) : (
               <span className="text-9xl font-bold text-white opacity-50">{project.name.charAt(0)}</span>
             )}
