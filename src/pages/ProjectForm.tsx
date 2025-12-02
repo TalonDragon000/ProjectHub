@@ -480,7 +480,7 @@ export default function ProjectForm() {
                     className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                   />
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
-                    <p className="font-semibold text-blue-900">📐 Recommended: 1200 x 630px (1.9:1 aspect ratio)</p>
+                    <p className="font-semibold text-blue-900">📐 Recommended: 1296 x 512px (16:9 aspect ratio)</p>
                     <p>• Minimum: 800 x 420px</p>
                     <p>• Formats: JPG, PNG, SVG</p>
                     <p>• Max size: 5MB | Recommended: under 500KB for faster loading</p>
