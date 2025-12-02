@@ -108,7 +108,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <NavBar />
 
-      <section id="hero" className="py-golden-2xl px-4 sm:px-6 lg:px-8">
+      <section id="hero" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4x text-center">
           <h1 className="text-5xl font-bold text-slate-900 mb-6">
             Discover & Support
@@ -124,8 +124,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="featured-projects" className="py-golden-xl px-4 sm:px-6 lg:px-8 bg-white/50">
-        <div className="max-w-golden mx-auto">
+      <section id="featured-projects" className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
               <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -136,8 +136,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="newest-projects" className="py-golden-xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-golden mx-auto">
+      <section id="newest-projects" className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
               <Clock className="w-6 h-6 text-blue-600" />
@@ -148,8 +148,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="featured-creators" className="py-golden-xl px-4 sm:px-6 lg:px-8 bg-white/50">
-        <div className="max-w-golden mx-auto">
+      <section id="featured-creators" className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
               <Users className="w-6 h-6 text-blue-600" />
@@ -188,8 +188,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="browse-by-category" className="py-golden-xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-golden mx-auto">
+      <section id="browse-by-category" className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <BrowseProjects
             projects={categoryProjects}
             selectedCategory={selectedCategory}
@@ -204,8 +204,8 @@ export default function Home() {
         </div>
       </section>
 
-      <footer id="footer" className="bg-slate-900 text-white py-golden-xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-golden mx-auto text-center">
+      <footer id="footer" className="bg-slate-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Grid3x3 className="w-8 h-8" />
             <span className="text-2xl font-bold">ProjectHub</span>

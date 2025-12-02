@@ -264,16 +264,16 @@ export default function ProjectPage() {
     <div className="min-h-screen bg-slate-50">
       <NavBar />
       
-      <section id="project-page" className="max-w-golden mx-auto px-4 sm:px-6 lg:px-8 py-golden-lg">
+      <section id="project-page" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section id="project-header" className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
-          <div className="h-page-hero-golden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <div className="h-64 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             {project.hero_image ? (
               <img src={project.hero_image} alt={project.name} className="w-full h-full object-cover" />
             ) : (
               <span className="text-9xl font-bold text-white opacity-50">{project.name.charAt(0)}</span>
             )}
           </div>
-          <div className="p-golden-lg">
+          <div className="p-8">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <div className="flex items-center space-x-3 mb-3">

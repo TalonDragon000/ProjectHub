@@ -20,7 +20,7 @@ export default function CreatorCard({ creator }: CreatorCardProps) {
   return (
     <Link
       to={`/profile/${creator.username}`}
-      className={`${cardLinkClasses} w-card-golden p-golden-sm`}
+      className={`${cardLinkClasses} w-80  p-6`}
     >
       <div className="flex flex-col items-center text-center">
         <div className="rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold mb-4 overflow-hidden mx-auto w-24 h-24">
@@ -57,7 +57,7 @@ export default function CreatorCard({ creator }: CreatorCardProps) {
           )}
         </div>
 
-        <div className="px-golden-lg py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+        <div className=" px-20 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
           View Profile
         </div>
       </div>
