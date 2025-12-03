@@ -1,13 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, ExternalLink, Heart, TrendingUp, DollarSign, User, Lightbulb, FileText } from 'lucide-react';
+import {
+  Star,
+  ExternalLink,
+  Heart,
+  TrendingUp,
+  DollarSign,
+  User,
+  Lightbulb,
+  Info,
+  Users,
+  UsersRound,
+  MonitorPlay,
+  AlertTriangle,
+  X,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Project, Review, QuickFeedback, Feature, Milestone, DonationGoal, ProjectLink, Profile } from '../types';
+import {
+  Project,
+  Review,
+  QuickFeedback,
+  Feature,
+  DonationGoal,
+  ProjectLink,
+  Profile,
+  ProjectIdea,
+} from '../types';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
-import IdeaTab from '../components/IdeaTab';
 import IdeaSentiment from '../components/IdeaSentiment';
+import AccordionSection from '../components/AccordionSection';
 import NavBar from '../components/NavBar';
+
+type FlowSection = 'discover' | 'validate' | 'try' | 'review';
 
 export default function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -17,7 +42,6 @@ export default function ProjectPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [feedback, setFeedback] = useState<QuickFeedback[]>([]);
   const [features, setFeatures] = useState<Feature[]>([]);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [links, setLinks] = useState<ProjectLink[]>([]);
   const [donationGoals, setDonationGoals] = useState<DonationGoal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +54,28 @@ export default function ProjectPage() {
   const [reviewerEmail, setReviewerEmail] = useState('');
   const [quickMessage, setQuickMessage] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'idea'>('overview');
+  const [idea, setIdea] = useState<ProjectIdea | null>(null);
+  const [ideaLoading, setIdeaLoading] = useState(true);
+  const [expandedSection, setExpandedSection] = useState<FlowSection>('discover');
+  const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false);
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+
+  const handleSectionToggle = (section: FlowSection) => {
+    if (section === 'try' && !disclaimerAcknowledged) {
+      setShowDisclaimerModal(true);
+      return;
+    }
+    setExpandedSection(section);
+  };
+
+  const handleDisclaimerAccept = () => {
+    setDisclaimerAcknowledged(true);
+    setShowDisclaimerModal(false);
+    setExpandedSection('try');
+  };
+
+  const embeddableLink = links.find((link) => link.link_type === 'demo' || link.link_type === 'website');
+  const primaryCtaLink = embeddableLink ?? links[0];
 
   useEffect(() => {
     if (slug) {
@@ -51,7 +96,7 @@ export default function ProjectPage() {
           table: 'reviews',
           filter: `project_id=eq.${project.id}`,
         },
-        async (payload) => {
+        async () => {
           await loadReviews(project.id);
           await refreshProjectRatings();
         }
@@ -79,9 +124,12 @@ export default function ProjectPage() {
       loadReviews(projectData.id);
       loadFeedback(projectData.id);
       loadFeatures(projectData.id);
-      loadMilestones(projectData.id);
       loadLinks(projectData.id);
       loadDonationGoals(projectData.id);
+      loadIdea(projectData.id);
+    } else {
+      setIdea(null);
+      setIdeaLoading(false);
     }
     setLoading(false);
   };
@@ -138,16 +186,6 @@ export default function ProjectPage() {
     if (data) setFeatures(data);
   };
 
-  const loadMilestones = async (projectId: string) => {
-    const { data } = await supabase
-      .from('milestones')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('order_index', { ascending: true });
-
-    if (data) setMilestones(data);
-  };
-
   const loadLinks = async (projectId: string) => {
     const { data } = await supabase.from('project_links').select('*').eq('project_id', projectId);
 
@@ -162,6 +200,22 @@ export default function ProjectPage() {
       .eq('goal_type', 'project');
 
     if (data) setDonationGoals(data);
+  };
+
+  const loadIdea = async (projectId: string) => {
+    setIdeaLoading(true);
+    const { data, error } = await supabase
+      .from('project_ideas')
+      .select('*')
+      .eq('project_id', projectId)
+      .maybeSingle();
+
+    if (!error && data) {
+      setIdea(data);
+    } else {
+      setIdea(null);
+    }
+    setIdeaLoading(false);
   };
 
   const refreshProjectRatings = async () => {
@@ -264,6 +318,49 @@ export default function ProjectPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <NavBar />
+
+      {/* Third-Party Disclaimer Modal */}
+      {showDisclaimerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowDisclaimerModal(false)}
+          />
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setShowDisclaimerModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Third-Party Content</h3>
+            </div>
+            <div className="space-y-3 text-slate-600 text-sm mb-6">
+              <p>
+                You are about to access external content hosted by a third party. Please be aware:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-500">
+                <li>ProjectHub does not own, operate, or control linked projects</li>
+                <li>We do not endorse or guarantee any third-party content</li>
+                <li>Visit external sites at your own discretion and risk</li>
+                <li>We are not liable for any damages arising from third-party content</li>
+              </ul>
+            </div>
+            <button
+              onClick={handleDisclaimerAccept}
+              className="w-full py-3 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              I Understand, Continue
+            </button>
+          </div>
+        </div>
+      )}
       
       <section id="project-page" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section id="project-header" className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
@@ -325,6 +422,14 @@ export default function ProjectPage() {
                   >
                     <ExternalLink className="w-4 h-4" />
                     <span className="font-medium">{link.link_name}</span>
+                    {(link.link_type === 'demo' || link.link_type === 'website') && (
+                      <div className="group relative">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          Third-party content
+                        </div>
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -332,255 +437,369 @@ export default function ProjectPage() {
           </div>
         </section>
 
-        <section id="project-tabs" className="mb-8 bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="border-b border-slate-200">
-            <div className="flex space-x-1 px-6">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`flex items-center space-x-2 px-6 py-4 font-medium border-b-2 transition-colors ${
-                  activeTab === 'overview'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <FileText className="w-5 h-5" />
-                <span>Overview & Reviews</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('idea')}
-                className={`flex items-center space-x-2 px-6 py-4 font-medium border-b-2 transition-colors ${
-                  activeTab === 'idea'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Lightbulb className="w-5 h-5" />
-                <span>Idea</span>
-              </button>
-            </div>
-          </div>
-          <div className="p-8">
-            {activeTab === 'idea' ? (
-              <IdeaTab projectId={project.id} />
-            ) : (
-              <div className="space-y-8">
-                <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-xl p-8 border border-blue-200">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                      <Lightbulb className="w-6 h-6 text-white" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-slate-900">Validate the Idea</h2>
-                  </div>
-                  <p className="text-slate-600 mb-6">
-                    Before diving into execution feedback, help the creator understand if their core concept resonates.
-                  </p>
-                  <IdeaSentiment projectId={project.id} compact={true} showDetails={false} />
-                </div>
-
-                <div className="bg-white rounded-xl p-8">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-6">Leave a Review</h2>
-              {submitSuccess && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-                  {submitSuccess}
-                </div>
-              )}
-              <form onSubmit={handleSubmitReview} className="space-y-4">
-                {user && profile ? (
-                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center space-x-2 text-blue-800">
-                      <User className="w-4 h-4" />
-                      <span className="text-sm font-medium">Posting as {profile.display_name}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                    <p className="text-sm text-slate-600 mb-2">
-                      Posting anonymously.{' '}
-                      <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-                        Sign in
-                      </Link>{' '}
-                      to post as yourself.
+        {/* Main Content Grid: Accordion + Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column: Accordion Sections */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Section 1: Discover the Idea */}
+            <AccordionSection
+              id="discover"
+              stepNumber={1}
+              title="Discover the Idea"
+              subtitle="Understand the problem & vision"
+              icon={<Lightbulb className="w-5 h-5" />}
+              isExpanded={expandedSection === 'discover'}
+              onToggle={() => handleSectionToggle('discover')}
+              colorScheme="amber"
+            >
+              {ideaLoading ? (
+                <div className="text-center py-8 text-slate-500">Loading idea details...</div>
+              ) : idea ? (
+                <div className="space-y-6">
+                  {/* Problem Area */}
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+                      Problem Area
+                    </h4>
+                    <p className="text-slate-900 text-lg leading-relaxed whitespace-pre-wrap">
+                      {idea.problem_area}
                     </p>
                   </div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Your Rating</label>
-                  <div className="flex space-x-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className="focus:outline-none"
-                      >
-                        <Star
-                          className={`w-8 h-8 transition-colors ${
-                            star <= (hoverRating || rating)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-slate-300'
-                          }`}
-                        />
-                      </button>
-                    ))}
+                  {/* Keywords */}
+                  {idea.keywords && idea.keywords.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+                        Keywords
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {idea.keywords.map((keyword, index) => (
+                          <span
+                            key={index}
+                            className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Collaboration Status */}
+                  <div className="flex items-center space-x-2">
+                    {idea.collaboration_open ? (
+                      <div className="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
+                        <UsersRound className="w-4 h-4" />
+                        <span className="font-medium text-sm">Open to Collaboration</span>
+                        <div className="group relative">
+                          <Info className="w-4 h-4 text-green-600 cursor-help" />
+                          <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-slate-900 text-white text-xs rounded shadow-lg z-10">
+                            This creator is open to collaboration opportunities
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg">
+                        <Users className="w-4 h-4" />
+                        <span className="font-medium text-sm">Not Seeking Collaborators</span>
+                      </div>
+                    )}
                   </div>
                 </div>
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  No idea details available for this project yet.
+                </div>
+              )}
+            </AccordionSection>
 
-                {!user && (
-                  <div className="grid grid-cols-2 gap-4">
+            {/* Section 2: Validate the Concept */}
+            <AccordionSection
+              id="validate"
+              stepNumber={2}
+              title="Validate the Concept"
+              subtitle="Signal if this idea resonates with you"
+              icon={<Heart className="w-5 h-5" />}
+              isExpanded={expandedSection === 'validate'}
+              onToggle={() => handleSectionToggle('validate')}
+              colorScheme="blue"
+            >
+              <IdeaSentiment projectId={project.id} compact={false} showDetails={true} />
+            </AccordionSection>
+
+            {/* Section 3: Try It Out */}
+            <AccordionSection
+              id="try"
+              stepNumber={3}
+              title="Try It Out"
+              subtitle="Third-party content · Not affiliated with ProjectHub"
+              icon={<MonitorPlay className="w-5 h-5" />}
+              isExpanded={expandedSection === 'try'}
+              onToggle={() => handleSectionToggle('try')}
+              colorScheme="slate"
+            >
+              {embeddableLink ? (
+                <div className="space-y-4">
+                  {/* Iframe Container */}
+                  <div className="relative aspect-video bg-slate-900 rounded-lg overflow-hidden">
+                    <iframe
+                      src={embeddableLink.url}
+                      title={`${project.name} preview`}
+                      className="w-full h-full"
+                      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                    />
+                  </div>
+                  {/* Fallback link */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => handleLinkClick(embeddableLink.id, embeddableLink.url)}
+                      className="flex items-center space-x-2 px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>Open in New Tab</span>
+                    </button>
+                  </div>
+                </div>
+              ) : primaryCtaLink ? (
+                <div className="text-center py-8">
+                  <p className="text-slate-600 mb-6">
+                    Ready to experience this project firsthand?
+                  </p>
+                  <button
+                    onClick={() => handleLinkClick(primaryCtaLink.id, primaryCtaLink.url)}
+                    className="inline-flex items-center space-x-2 px-8 py-4 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-lg font-semibold"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    <span>Launch {project.name}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  No live demo available yet. Check back later!
+                </div>
+              )}
+            </AccordionSection>
+
+            {/* Section 4: Review the Execution */}
+            <AccordionSection
+              id="review"
+              stepNumber={4}
+              title="Review the Execution"
+              subtitle="Rate the implementation & report issues"
+              icon={<Star className="w-5 h-5" />}
+              isExpanded={expandedSection === 'review'}
+              onToggle={() => handleSectionToggle('review')}
+              colorScheme="white"
+            >
+              <div className="space-y-8">
+                {/* Review Form */}
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-4">Leave a Review</h3>
+                  {submitSuccess && (
+                    <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+                      {submitSuccess}
+                    </div>
+                  )}
+                  <form onSubmit={handleSubmitReview} className="space-y-4">
+                    {user && profile ? (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center space-x-2 text-blue-800">
+                          <User className="w-4 h-4" />
+                          <span className="text-sm font-medium">Posting as {profile.display_name}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <p className="text-sm text-slate-600">
+                          Posting anonymously.{' '}
+                          <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                            Sign in
+                          </Link>{' '}
+                          to post as yourself.
+                        </p>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">Your Rating</label>
+                      <div className="flex space-x-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            className="focus:outline-none"
+                          >
+                            <Star
+                              className={`w-8 h-8 transition-colors ${
+                                star <= (hoverRating || rating)
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-slate-300'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {!user && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Name (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={reviewerName}
+                            onChange={(e) => setReviewerName(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            placeholder="John Doe"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Email (Optional)
+                          </label>
+                          <input
+                            type="email"
+                            value={reviewerEmail}
+                            onChange={(e) => setReviewerEmail(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            placeholder="you@example.com"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Name (Optional)
+                        Review Title
                       </label>
                       <input
                         type="text"
-                        value={reviewerName}
-                        onChange={(e) => setReviewerName(e.target.value)}
+                        value={reviewTitle}
+                        onChange={(e) => setReviewTitle(e.target.value)}
                         className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="John Doe"
+                        placeholder="Sum up your experience"
+                        required
                       />
                     </div>
+
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Email (Optional)
+                        Your Review
                       </label>
-                      <input
-                        type="email"
-                        value={reviewerEmail}
-                        onChange={(e) => setReviewerEmail(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="you@example.com"
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        rows={4}
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                        placeholder="Share your thoughts about this project..."
+                        required
                       />
                     </div>
-                  </div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Review Title
-                  </label>
-                  <input
-                    type="text"
-                    value={reviewTitle}
-                    onChange={(e) => setReviewTitle(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="Sum up your experience"
-                    required
-                  />
+                    <button
+                      type="submit"
+                      disabled={rating === 0}
+                      className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Submit Review
+                    </button>
+                  </form>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Your Review
-                  </label>
-                  <textarea
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                    placeholder="Share your thoughts about this project..."
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={rating === 0}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Submit Review
-                </button>
-              </form>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">Reviews ({reviews.length})</h2>
-              <div className="space-y-6">
-                {reviews.map((review) => (
-                  <div key={review.id} className="border-b border-slate-200 pb-6 last:border-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < review.rating ? 'text-yellow-400 fill-current' : 'text-slate-300'
-                              }`}
-                            />
-                          ))}
+                {/* Reviews List */}
+                <div className="border-t border-slate-200 pt-8">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6">Reviews ({reviews.length})</h3>
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="border-b border-slate-200 pb-6 last:border-0">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <div className="flex items-center space-x-1 mb-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < review.rating ? 'text-yellow-400 fill-current' : 'text-slate-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <h4 className="font-bold text-slate-900">{review.title}</h4>
+                          </div>
+                          <span className="text-sm text-slate-500">
+                            {format(new Date(review.created_at), 'MMM d, yyyy')}
+                          </span>
                         </div>
-                        <h3 className="font-bold text-slate-900">{review.title}</h3>
+                        <p className="text-slate-700 mb-2">{review.review_text}</p>
+                        <div className="text-sm text-slate-500">
+                          {review.profile ? (
+                            <Link
+                              to={`/creator/${review.profile.username}`}
+                              className="text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              {review.profile.display_name}
+                            </Link>
+                          ) : (
+                            <span>{review.reviewer_name || 'Anonymous'}</span>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-sm text-slate-500">
-                        {format(new Date(review.created_at), 'MMM d, yyyy')}
-                      </span>
-                    </div>
-                    <p className="text-slate-700 mb-2">{review.review_text}</p>
-                    <div className="text-sm text-slate-500">
-                      {review.profile ? (
-                        <Link
-                          to={`/creator/${review.profile.username}`}
-                          className="text-blue-600 hover:text-blue-700 font-medium"
-                        >
-                          {review.profile.display_name}
-                        </Link>
-                      ) : (
-                        <span>{review.reviewer_name || 'Anonymous'}</span>
-                      )}
-                    </div>
+                    ))}
+                    {reviews.length === 0 && (
+                      <p className="text-center text-slate-500 py-8">No reviews yet. Be the first!</p>
+                    )}
                   </div>
-                ))}
-                {reviews.length === 0 && (
-                  <p className="text-center text-slate-500 py-8">No reviews yet. Be the first!</p>
-                )}
-              </div>
-            </div>
+                </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Quick Feedback</h3>
-              <form onSubmit={handleSubmitFeedback} className="mb-6">
-                <textarea
-                  value={quickMessage}
-                  onChange={(e) => setQuickMessage(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none mb-3"
-                  placeholder="Share quick thoughts or suggestions..."
-                  required
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-slate-900 text-white py-2 rounded-lg font-medium hover:bg-slate-800 transition-colors"
-                >
-                  Send Feedback
-                </button>
-              </form>
-              <div className="space-y-3">
-                {feedback.map((item) => (
-                  <div key={item.id} className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-sm text-slate-700">{item.message}</p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {format(new Date(item.created_at), 'MMM d, yyyy')}
-                    </p>
-                  </div>
-                ))}
+                {/* Quick Feedback */}
+                <div className="border-t border-slate-200 pt-8">
+                  <h3 className="text-xl font-bold text-slate-900 mb-4">Quick Feedback</h3>
+                  <form onSubmit={handleSubmitFeedback} className="mb-6">
+                    <textarea
+                      value={quickMessage}
+                      onChange={(e) => setQuickMessage(e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none mb-3"
+                      placeholder="Share quick thoughts or suggestions..."
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="w-full bg-slate-900 text-white py-2 rounded-lg font-medium hover:bg-slate-800 transition-colors"
+                    >
+                      Send Feedback
+                    </button>
+                  </form>
+                  {feedback.length > 0 && (
+                    <div className="space-y-3">
+                      {feedback.map((item) => (
+                        <div key={item.id} className="bg-slate-50 rounded-lg p-3">
+                          <p className="text-sm text-slate-700">{item.message}</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {format(new Date(item.created_at), 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-              </div>
-            )}
+            </AccordionSection>
           </div>
-          </section>
 
-        {activeTab === 'overview' && (
-          <section id="project-overview" className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <section id="project-support" className="lg:col-span-3">
-              {creator?.payment_provider && creator?.payment_username && (
-                <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-green-200">
+          {/* Right Column: Sidebar */}
+          <div className="space-y-6">
+            {/* Support the Creator */}
+            {creator?.payment_provider && creator?.payment_username && (
+              <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-green-200">
                 <div className="flex items-center space-x-2 mb-4">
                   <DollarSign className="w-6 h-6 text-green-600" />
-                  <h3 className="text-xl font-bold text-slate-900">Support the Creator</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Support the Creator</h3>
                 </div>
                 <p className="text-sm text-slate-600 mb-4">
                   Enjoy this project? Show your support by leaving a tip for {creator.display_name}!
@@ -593,20 +812,19 @@ export default function ProjectPage() {
                 >
                   <DollarSign className="w-5 h-5" />
                   <span>Tip via {creator.payment_provider === 'paypal' ? 'PayPal' : creator.payment_provider === 'ko-fi' ? 'Ko-fi' : 'Stripe'}</span>
-                  <ExternalLink className="w-4 h-4" />
                 </a>
               </div>
             )}
-            </section>
 
+            {/* Roadmap */}
             {features.length > 0 && (
-              <section id="project-features" className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">Roadmap</h3>
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Roadmap</h3>
                 <div className="space-y-3">
                   {features.slice(0, 5).map((feature) => (
                     <div key={feature.id} className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="font-medium text-slate-900">{feature.title}</p>
+                        <p className="font-medium text-slate-900 text-sm">{feature.title}</p>
                         <p className="text-xs text-slate-500 capitalize">{feature.status.replace('_', ' ')}</p>
                       </div>
                       <div className="flex items-center space-x-1 text-sm">
@@ -616,12 +834,13 @@ export default function ProjectPage() {
                     </div>
                   ))}
                 </div>
-              </section>
+              </div>
             )}
 
+            {/* Donation Goals */}
             {donationGoals.length > 0 && (
-              <section id="project-donation-goals" className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">Support This Project</h3>
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Funding Goals</h3>
                 {donationGoals.map((goal) => (
                   <div key={goal.id} className="mb-4">
                     <div className="flex items-center justify-between mb-2">
@@ -634,7 +853,7 @@ export default function ProjectPage() {
                       <div
                         className="bg-blue-600 h-2 rounded-full transition-all"
                         style={{ width: `${Math.min((goal.current_amount / goal.goal_amount) * 100, 100)}%` }}
-                      ></div>
+                      />
                     </div>
                   </div>
                 ))}
@@ -642,10 +861,10 @@ export default function ProjectPage() {
                   <Heart className="w-5 h-5" />
                   <span>Support Project</span>
                 </button>
-              </section>
+              </div>
             )}
-          </section>
-        )}
+          </div>
+        </div>
       </section>
     </div>
   );

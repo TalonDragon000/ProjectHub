@@ -174,8 +174,9 @@ export interface ProjectIdea {
   project_id: string;
   problem_area: string;
   keywords: string[];
-  hot_count: number;
-  cold_count: number;
+  need_count: number;
+  curious_count: number;
+  rethink_count: number;
   collaboration_open: boolean;
   created_at: string;
   updated_at: string;
@@ -185,6 +186,6 @@ export interface IdeaReaction {
   id: string;
   project_id: string;
   user_id: string | null;
-  reaction_type: 'hot' | 'cold';
+  reaction_type: 'need' | 'curious' | 'rethink';
   created_at: string;
 }

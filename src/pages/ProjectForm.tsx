@@ -21,6 +21,7 @@ export default function ProjectForm() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('saas');
   const [status, setStatus] = useState<'active' | 'paused' | 'completed'>('active');
+  const [demoUrl, setDemoUrl] = useState<string | null>(null);
   const [heroImage, setHeroImage] = useState('');
   const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
@@ -41,6 +42,7 @@ export default function ProjectForm() {
   useEffect(() => {
     if (isEdit && id) {
       loadProject();
+      loadDemoUrl();
     }
   }, [id, isEdit]);
 
@@ -87,6 +89,20 @@ export default function ProjectForm() {
     }
   };
 
+  const loadDemoUrl = async () => {
+    if (!id) return;
+
+    const { data: linkData } = await supabase
+      .from('project_links')
+      .select('*')
+      .eq('project_id', id)
+      .eq('link_type', 'demo')
+      .maybeSingle();
+
+    if (linkData) {
+      setDemoUrl(linkData.url);
+    }
+};
   const handleHeroImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -273,6 +289,44 @@ export default function ProjectForm() {
         .eq('id', projectId);
 
       if (updateError) throw updateError;
+
+      // After saving project details, upsert the demo link
+      if (projectId && demoUrl) {
+        const { data: existingLink } = await supabase
+        .from('project_links')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('link_type', 'demo')
+        .maybeSingle();
+    
+      if (existingLink) {
+        // Update existing
+        const { error: updateError } = await supabase
+        .from('project_links')
+        .update({ url: demoUrl, link_name: demoUrl })
+        .eq('id', existingLink.id);
+      if (updateError) throw updateError;
+      } else {
+        // Insert new
+        const { error: insertError } = await supabase
+        .from('project_links')
+        .insert({
+          project_id: projectId,
+          link_name: 'Live Demo',
+          url: demoUrl,
+          link_type: 'demo',
+        });
+      if (insertError) throw insertError;
+      }
+    } else if (projectId) {
+      // Remove demo link if URL is cleared
+      const { error: deleteError } = await supabase
+        .from('project_links')
+        .delete()
+        .eq('project_id', projectId)
+        .eq('link_type', 'demo');
+      if (deleteError) throw deleteError;
+    }
 
       setSaveMessage('Project details saved!');
       setTimeout(() => setSaveMessage(''), 3000);
@@ -618,6 +672,22 @@ export default function ProjectForm() {
                   <option value="paused">Paused - Temporarily on hold</option>
                   <option value="completed">Completed - Finished and launched</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Live Demo URL
+                </label>
+                <input
+                  type="url"
+                  value={demoUrl || ''}
+                  onChange={(e) => setDemoUrl(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  placeholder="https://your-project.com"
+                />
+                <p className="mt-1 text-sm text-slate-500">
+                  URL to your live project for the embedded preview
+                </p>
               </div>
             </div>
           )}
