@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Rocket, Eye, RefreshCw, Info } from 'lucide-react';
+import { Rocket, Eye, RefreshCw, MessageSquare, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { ProjectIdea } from '../types';
+import { ProjectIdea, QuickFeedback, Profile } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { format } from 'date-fns';
 
 interface IdeaSentimentProps {
   projectId: string;
@@ -16,9 +17,15 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
   const [userReaction, setUserReaction] = useState<'need' | 'curious' | 'rethink' | null>(null);
   const [loading, setLoading] = useState(true);
   const [reacting, setReacting] = useState(false);
+  const [feedback, setFeedback] = useState<(QuickFeedback & { profile?: Profile })[]>([]);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
 
   useEffect(() => {
     loadIdea();
+    loadFeedback();
     if (profile) {
       loadUserReaction();
     }
@@ -91,6 +98,53 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
     }
   };
 
+  const loadFeedback = async () => {
+    const { data, error } = await supabase
+      .from('quick_feedback')
+      .select(`
+        *,
+        profile:user_id (
+          id,
+          display_name,
+          username,
+          avatar_url
+        )
+      `)
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+
+    if (data && !error) {
+      setFeedback(data as any);
+    }
+  };
+
+  const handleSubmitFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackMessage.trim()) return;
+
+    setSubmittingFeedback(true);
+
+    try {
+      const { error } = await supabase.from('quick_feedback').insert({
+        project_id: projectId,
+        message: feedbackMessage.trim(),
+        user_id: profile?.user_id || null,
+        reaction_type: userReaction,
+      });
+
+      if (!error) {
+        setFeedbackMessage('');
+        setFeedbackSuccess(true);
+        await loadFeedback();
+        setTimeout(() => setFeedbackSuccess(false), 3000);
+      }
+    } catch (err) {
+      console.error('Error submitting feedback:', err);
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-6">
@@ -119,80 +173,116 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
         </p>
 
         <div className="flex flex-wrap gap-3 mb-6">
-          <button
-            onClick={() => handleReaction('need')}
-            disabled={reacting}
-            className={`relative inline-flex items-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
-              userReaction === 'need'
-                ? 'bg-green-50 border-green-500 shadow-md'
-                : 'bg-white border-slate-200 hover:border-green-400 hover:bg-green-50'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            <Rocket
-              className={`w-5 h-5 transition-colors ${
-                userReaction === 'need' ? 'text-green-600' : 'text-slate-400 group-hover:text-green-600'
-              }`}
-            />
-            <span className="font-medium text-slate-900">Need this</span>
-            <span className={`font-bold ${userReaction === 'need' ? 'text-green-600' : 'text-slate-600'}`}>
-              {idea.need_count}
-            </span>
-            {userReaction === 'need' && (
-              <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full">
-                Your vote
+          <div className="relative group">
+            <button
+              onClick={() => handleReaction('need')}
+              disabled={reacting}
+              onMouseEnter={() => setTooltipVisible('need')}
+              onMouseLeave={() => setTooltipVisible(null)}
+              onFocus={() => setTooltipVisible('need')}
+              onBlur={() => setTooltipVisible(null)}
+              className={`relative inline-flex items-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                userReaction === 'need'
+                  ? 'bg-green-50 border-green-500 shadow-md'
+                  : 'bg-white border-slate-200 hover:border-green-400 hover:bg-green-50'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Rocket
+                className={`w-5 h-5 transition-colors ${
+                  userReaction === 'need' ? 'text-green-600' : 'text-slate-400 group-hover:text-green-600'
+                }`}
+              />
+              <span className="font-medium text-slate-900">Need this</span>
+              <span className={`font-bold ${userReaction === 'need' ? 'text-green-600' : 'text-slate-600'}`}>
+                {idea.need_count}
               </span>
+              {userReaction === 'need' && (
+                <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full">
+                  Your vote
+                </span>
+              )}
+            </button>
+            {tooltipVisible === 'need' && (
+              <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap">
+                Strong validation, high demand signal for this concept
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
+              </div>
             )}
-          </button>
+          </div>
 
-          <button
-            onClick={() => handleReaction('curious')}
-            disabled={reacting}
-            className={`relative inline-flex items-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
-              userReaction === 'curious'
-                ? 'bg-amber-50 border-amber-500 shadow-md'
-                : 'bg-white border-slate-200 hover:border-amber-400 hover:bg-amber-50'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            <Eye
-              className={`w-5 h-5 transition-colors ${
-                userReaction === 'curious' ? 'text-amber-600' : 'text-slate-400 group-hover:text-amber-600'
-              }`}
-            />
-            <span className="font-medium text-slate-900">Curious</span>
-            <span className={`font-bold ${userReaction === 'curious' ? 'text-amber-600' : 'text-slate-600'}`}>
-              {idea.curious_count}
-            </span>
-            {userReaction === 'curious' && (
-              <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-amber-500 text-white text-xs font-semibold rounded-full">
-                Your vote
+          <div className="relative group">
+            <button
+              onClick={() => handleReaction('curious')}
+              disabled={reacting}
+              onMouseEnter={() => setTooltipVisible('curious')}
+              onMouseLeave={() => setTooltipVisible(null)}
+              onFocus={() => setTooltipVisible('curious')}
+              onBlur={() => setTooltipVisible(null)}
+              className={`relative inline-flex items-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                userReaction === 'curious'
+                  ? 'bg-amber-50 border-amber-500 shadow-md'
+                  : 'bg-white border-slate-200 hover:border-amber-400 hover:bg-amber-50'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Eye
+                className={`w-5 h-5 transition-colors ${
+                  userReaction === 'curious' ? 'text-amber-600' : 'text-slate-400 group-hover:text-amber-600'
+                }`}
+              />
+              <span className="font-medium text-slate-900">Curious</span>
+              <span className={`font-bold ${userReaction === 'curious' ? 'text-amber-600' : 'text-slate-600'}`}>
+                {idea.curious_count}
               </span>
+              {userReaction === 'curious' && (
+                <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-amber-500 text-white text-xs font-semibold rounded-full">
+                  Your vote
+                </span>
+              )}
+            </button>
+            {tooltipVisible === 'curious' && (
+              <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap">
+                Interesting idea, but needs more clarity or refinement
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
+              </div>
             )}
-          </button>
+          </div>
 
-          <button
-            onClick={() => handleReaction('rethink')}
-            disabled={reacting}
-            className={`relative inline-flex items-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
-              userReaction === 'rethink'
-                ? 'bg-slate-50 border-slate-500 shadow-md'
-                : 'bg-white border-slate-200 hover:border-slate-400 hover:bg-slate-50'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            <RefreshCw
-              className={`w-5 h-5 transition-colors ${
-                userReaction === 'rethink' ? 'text-slate-600' : 'text-slate-400 group-hover:text-slate-600'
-              }`}
-            />
-            <span className="font-medium text-slate-900">Rethink</span>
-            <span className={`font-bold ${userReaction === 'rethink' ? 'text-slate-600' : 'text-slate-600'}`}>
-              {idea.rethink_count}
-            </span>
-            {userReaction === 'rethink' && (
-              <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-slate-500 text-white text-xs font-semibold rounded-full">
-                Your vote
+          <div className="relative group">
+            <button
+              onClick={() => handleReaction('rethink')}
+              disabled={reacting}
+              onMouseEnter={() => setTooltipVisible('rethink')}
+              onMouseLeave={() => setTooltipVisible(null)}
+              onFocus={() => setTooltipVisible('rethink')}
+              onBlur={() => setTooltipVisible(null)}
+              className={`relative inline-flex items-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                userReaction === 'rethink'
+                  ? 'bg-slate-50 border-slate-500 shadow-md'
+                  : 'bg-white border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <RefreshCw
+                className={`w-5 h-5 transition-colors ${
+                  userReaction === 'rethink' ? 'text-slate-600' : 'text-slate-400 group-hover:text-slate-600'
+                }`}
+              />
+              <span className="font-medium text-slate-900">Rethink</span>
+              <span className={`font-bold ${userReaction === 'rethink' ? 'text-slate-600' : 'text-slate-600'}`}>
+                {idea.rethink_count}
               </span>
+              {userReaction === 'rethink' && (
+                <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-slate-500 text-white text-xs font-semibold rounded-full">
+                  Your vote
+                </span>
+              )}
+            </button>
+            {tooltipVisible === 'rethink' && (
+              <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap">
+                Concept may need significant changes or a different approach
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
+              </div>
             )}
-          </button>
+          </div>
         </div>
 
         {totalReactions > 0 && (
@@ -226,27 +316,124 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
         {!profile && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Sign in</strong> to react to this idea and let the creator know what you think!
+              <strong>Sign in</strong> to react to this idea and earn validator badges!
             </p>
           </div>
         )}
       </div>
 
-      {showDetails && (
-        <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
-          <div className="flex items-start space-x-2">
-            <Info className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-slate-900 mb-2 text-sm">What each rating means</h4>
-              <ul className="text-xs text-slate-600 space-y-1">
-                <li><strong>Need this:</strong> Strong validation, high demand signal for this concept</li>
-                <li><strong>Curious:</strong> Interesting idea, but needs more clarity or refinement</li>
-                <li><strong>Rethink:</strong> Concept may need significant changes or a different approach</li>
-              </ul>
-            </div>
-          </div>
+      <div className="border-t border-slate-200 pt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+            <MessageSquare className="w-5 h-5 text-slate-600" />
+            <span>Share Your Thoughts</span>
+          </h3>
+          {feedback.length > 0 && (
+            <span className="text-sm text-slate-600">{feedback.length} {feedback.length === 1 ? 'comment' : 'comments'}</span>
+          )}
         </div>
-      )}
+
+        <form onSubmit={handleSubmitFeedback} className="mb-6">
+          <textarea
+            value={feedbackMessage}
+            onChange={(e) => setFeedbackMessage(e.target.value)}
+            rows={3}
+            maxLength={500}
+            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+            placeholder="Share your thoughts: affirm, question, suggest alternatives, or share your experience..."
+          />
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs text-slate-500">
+              {feedbackMessage.length}/500 characters
+            </span>
+            <button
+              type="submit"
+              disabled={submittingFeedback || !feedbackMessage.trim()}
+              className="inline-flex items-center space-x-2 bg-slate-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submittingFeedback ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Sending...</span>
+                </>
+              ) : feedbackSuccess ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Sent!</span>
+                </>
+              ) : (
+                <span>Share Feedback</span>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {feedback.length > 0 && (
+          <div className="space-y-3">
+            {feedback.map((item) => {
+              const bgColor = item.reaction_type === 'need'
+                ? 'bg-green-50 border-green-100'
+                : item.reaction_type === 'curious'
+                ? 'bg-amber-50 border-amber-100'
+                : item.reaction_type === 'rethink'
+                ? 'bg-slate-50 border-slate-100'
+                : 'bg-slate-50 border-slate-100';
+
+              return (
+                <div key={item.id} className={`rounded-lg p-4 border ${bgColor}`}>
+                  <div className="flex items-start space-x-3">
+                    {item.profile ? (
+                      <div className="flex-shrink-0">
+                        {item.profile.avatar_url ? (
+                          <img
+                            src={item.profile.avatar_url}
+                            alt={item.profile.display_name}
+                            className="w-8 h-8 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center">
+                            <span className="text-xs font-medium text-slate-600">
+                              {item.profile.display_name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                          <span className="text-xs font-medium text-slate-500">?</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        {item.profile ? (
+                          <span className="text-sm font-medium text-slate-900">
+                            {item.profile.display_name}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-medium text-slate-500">Anonymous</span>
+                        )}
+                        <span className="text-xs text-slate-500">
+                          {format(new Date(item.created_at), 'MMM d, yyyy')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700 leading-relaxed">{item.message}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {feedback.length === 0 && (
+          <div className="text-center py-8 text-slate-500">
+            <MessageSquare className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+            <p className="text-sm">No feedback yet. Be the first to share your thoughts!</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

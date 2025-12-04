@@ -19,7 +19,6 @@ import { supabase } from '../lib/supabase';
 import {
   Project,
   Review,
-  QuickFeedback,
   Feature,
   DonationGoal,
   ProjectLink,
@@ -40,7 +39,6 @@ export default function ProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [creator, setCreator] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [feedback, setFeedback] = useState<QuickFeedback[]>([]);
   const [features, setFeatures] = useState<Feature[]>([]);
   const [links, setLinks] = useState<ProjectLink[]>([]);
   const [donationGoals, setDonationGoals] = useState<DonationGoal[]>([]);
@@ -52,7 +50,6 @@ export default function ProjectPage() {
   const [reviewText, setReviewText] = useState('');
   const [reviewerName, setReviewerName] = useState('');
   const [reviewerEmail, setReviewerEmail] = useState('');
-  const [quickMessage, setQuickMessage] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState('');
   const [idea, setIdea] = useState<ProjectIdea | null>(null);
   const [ideaLoading, setIdeaLoading] = useState(true);
@@ -122,7 +119,6 @@ export default function ProjectPage() {
       loadCreator(projectData.user_id);
       trackPageView(projectData.id);
       loadReviews(projectData.id);
-      loadFeedback(projectData.id);
       loadFeatures(projectData.id);
       loadLinks(projectData.id);
       loadDonationGoals(projectData.id);
@@ -163,17 +159,6 @@ export default function ProjectPage() {
       .order('created_at', { ascending: false });
 
     if (data) setReviews(data);
-  };
-
-  const loadFeedback = async (projectId: string) => {
-    const { data } = await supabase
-      .from('quick_feedback')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (data) setFeedback(data);
   };
 
   const loadFeatures = async (projectId: string) => {
@@ -266,25 +251,6 @@ export default function ProjectPage() {
       setReviewerEmail('');
       await loadReviews(project.id);
       await refreshProjectRatings();
-      setTimeout(() => setSubmitSuccess(''), 3000);
-    }
-  };
-
-  const handleSubmitFeedback = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!project || !quickMessage.trim()) return;
-
-    const { error } = await supabase.from('quick_feedback').insert([
-      {
-        project_id: project.id,
-        message: quickMessage,
-      },
-    ]);
-
-    if (!error) {
-      setSubmitSuccess('Feedback sent!');
-      setQuickMessage('');
-      loadFeedback(project.id);
       setTimeout(() => setSubmitSuccess(''), 3000);
     }
   };
@@ -754,39 +720,6 @@ export default function ProjectPage() {
                       <p className="text-center text-slate-500 py-8">No reviews yet. Be the first!</p>
                     )}
                   </div>
-                </div>
-
-                {/* Quick Feedback */}
-                <div className="border-t border-slate-200 pt-8">
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">Quick Feedback</h3>
-                  <form onSubmit={handleSubmitFeedback} className="mb-6">
-                    <textarea
-                      value={quickMessage}
-                      onChange={(e) => setQuickMessage(e.target.value)}
-                      rows={3}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none mb-3"
-                      placeholder="Share quick thoughts or suggestions..."
-                      required
-                    />
-                    <button
-                      type="submit"
-                      className="w-full bg-slate-900 text-white py-2 rounded-lg font-medium hover:bg-slate-800 transition-colors"
-                    >
-                      Send Feedback
-                    </button>
-                  </form>
-                  {feedback.length > 0 && (
-                    <div className="space-y-3">
-                      {feedback.map((item) => (
-                        <div key={item.id} className="bg-slate-50 rounded-lg p-3">
-                          <p className="text-sm text-slate-700">{item.message}</p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            {format(new Date(item.created_at), 'MMM d, yyyy')}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             </AccordionSection>
