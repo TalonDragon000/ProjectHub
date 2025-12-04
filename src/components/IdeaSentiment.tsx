@@ -494,12 +494,12 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
           </div>
         )}
 
-        {feedback.length === 0 && (
+        {feedback.length === 0 (
           <div className="text-center py-8 text-slate-500">
             <MessageSquare className="w-12 h-12 mx-auto mb-3 text-slate-300" />
             <p className="text-sm">No feedback yet. Be the first to share your thoughts!</p>
           </div>
-        )}
+        ), (loadFeedback)}
         </div>
       )}
     </div>
