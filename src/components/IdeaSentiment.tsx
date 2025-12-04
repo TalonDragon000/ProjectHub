@@ -127,6 +127,15 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
             await loadIdea();
           }
         } else {
+          if (userReaction) {
+            await supabase
+              .from('idea_reactions')
+              .delete()
+              .eq('project_id', projectId)
+              .eq('session_id', sessionId)
+              .is('user_id', null);
+          }
+
           const { error } = await supabase.from('idea_reactions').insert({
             project_id: projectId,
             session_id: sessionId,
