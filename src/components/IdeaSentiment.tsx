@@ -12,7 +12,7 @@ interface IdeaSentimentProps {
 }
 
 export default function IdeaSentiment({ projectId, compact = false, showDetails = true }: IdeaSentimentProps) {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [idea, setIdea] = useState<ProjectIdea | null>(null);
   const [userReaction, setUserReaction] = useState<'need' | 'curious' | 'rethink' | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,22 +22,10 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string>('');
   const [postAnonymously, setPostAnonymously] = useState(false);
   const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(null);
   const [editMessage, setEditMessage] = useState('');
   const [editAnonymously, setEditAnonymously] = useState(false);
-
-  useEffect(() => {
-    const storedSessionId = localStorage.getItem('projecthub_session_id');
-    if (storedSessionId) {
-      setSessionId(storedSessionId);
-    } else {
-      const newSessionId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('projecthub_session_id', newSessionId);
-      setSessionId(newSessionId);
-    }
-  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -48,10 +36,8 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
   useEffect(() => {
     loadIdea();
     loadFeedback();
-    if (sessionId) {
-      loadUserReaction();
-    }
-  }, [projectId, profile, sessionId]);
+    loadUserReaction();
+  }, [projectId, profile]);
 
   const loadIdea = async () => {
     const { data, error } = await supabase
@@ -67,96 +53,48 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
   };
 
   const loadUserReaction = async () => {
-    if (profile) {
-      const { data } = await supabase
-        .from('idea_reactions')
-        .select('reaction_type')
-        .eq('project_id', projectId)
-        .eq('user_id', profile.id)
-        .maybeSingle();
+    if (!profile) return;
 
-      if (data) {
-        setUserReaction(data.reaction_type);
-      }
-    } else if (sessionId) {
-      const { data } = await supabase
-        .from('idea_reactions')
-        .select('reaction_type')
-        .eq('project_id', projectId)
-        .eq('session_id', sessionId)
-        .is('user_id', null)
-        .maybeSingle();
+    const { data } = await supabase
+      .from('idea_reactions')
+      .select('reaction_type')
+      .eq('project_id', projectId)
+      .eq('user_id', profile.id)
+      .maybeSingle();
 
-      if (data) {
-        setUserReaction(data.reaction_type);
-      }
+    if (data) {
+      setUserReaction(data.reaction_type);
     }
   };
 
   const handleReaction = async (type: 'need' | 'curious' | 'rethink') => {
-    if (!sessionId) return;
+    if (!user || !profile) return;
 
     setReacting(true);
 
     try {
       if (userReaction === type) {
-        if (profile) {
-          const { error } = await supabase
-            .from('idea_reactions')
-            .delete()
-            .eq('project_id', projectId)
-            .eq('user_id', profile.id);
+        const { error } = await supabase
+          .from('idea_reactions')
+          .delete()
+          .eq('project_id', projectId)
+          .eq('user_id', profile.id);
 
-          if (!error) {
-            setUserReaction(null);
-            await loadIdea();
-          }
-        } else {
-          const { error } = await supabase
-            .from('idea_reactions')
-            .delete()
-            .eq('project_id', projectId)
-            .eq('session_id', sessionId)
-            .is('user_id', null);
-
-          if (!error) {
-            setUserReaction(null);
-            await loadIdea();
-          }
+        if (!error) {
+          setUserReaction(null);
+          await loadIdea();
         }
       } else {
-        if (profile) {
-          const { error } = await supabase.from('idea_reactions').upsert({
-            project_id: projectId,
-            user_id: profile.id,
-            reaction_type: type,
-          });
+        const { error } = await supabase.from('idea_reactions').upsert({
+          project_id: projectId,
+          user_id: profile.id,
+          created_by_auth_uid: user.id,
+          reaction_type: type,
+        });
 
-          if (!error) {
-            setUserReaction(type);
-            await loadIdea();
-          }
-        } else {
-          if (userReaction) {
-            await supabase
-              .from('idea_reactions')
-              .delete()
-              .eq('project_id', projectId)
-              .eq('session_id', sessionId)
-              .is('user_id', null);
-          }
-
-          const { error } = await supabase.from('idea_reactions').insert({
-            project_id: projectId,
-            session_id: sessionId,
-            reaction_type: type,
-            user_id: null,
-          });
-
-          if (!error) {
-            setUserReaction(type);
-            await loadIdea();
-          }
+        if (!error) {
+          setUserReaction(type);
+          await loadIdea();
         }
       }
     } catch (err) {
@@ -187,14 +125,13 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
   };
 
   const canEditFeedback = (item: QuickFeedback) => {
-    if (profile && item.user_id === profile.id) return true;
-    if (!item.user_id && item.session_id === sessionId) return true;
-    return false;
+    if (!user) return false;
+    return item.created_by_auth_uid === user.id;
   };
 
   const handleSubmitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!feedbackMessage.trim()) return;
+    if (!feedbackMessage.trim() || !user || !profile) return;
 
     setSubmittingFeedback(true);
 
@@ -203,10 +140,10 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
         project_id: projectId,
         message: feedbackMessage.trim(),
         sentiment: userReaction,
-        session_id: sessionId,
+        created_by_auth_uid: user.id,
       };
 
-      if (profile && !postAnonymously) {
+      if (!postAnonymously) {
         feedbackData.user_id = profile.id;
       } else {
         feedbackData.user_id = null;
@@ -258,8 +195,7 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
       const { error } = await supabase
         .from('quick_feedback')
         .update(updateData)
-        .eq('id', editingFeedbackId)
-        .eq('session_id', sessionId);
+        .eq('id', editingFeedbackId);
 
       if (!error) {
         setEditingFeedbackId(null);
@@ -277,8 +213,7 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
       const { error } = await supabase
         .from('quick_feedback')
         .delete()
-        .eq('id', feedbackId)
-        .eq('session_id', sessionId);
+        .eq('id', feedbackId);
 
       if (!error) {
         await loadFeedback();

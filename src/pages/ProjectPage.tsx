@@ -72,19 +72,9 @@ export default function ProjectPage() {
   const [editShowXPIndicator, setEditShowXPIndicator] = useState(false);
   const [editXpAmount, setEditXpAmount] = useState(0);
 
-  const getSessionId = () => {
-    let sessionId = localStorage.getItem('projecthub_session_id');
-    if (!sessionId) {
-      sessionId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('projecthub_session_id', sessionId);
-    }
-    return sessionId;
-  };
-
   const canEditReview = (review: Review) => {
-    if (user && profile && review.user_id === profile.id) return true;
-    if (!review.user_id && review.session_id === getSessionId()) return true;
-    return false;
+    if (!user) return false;
+    return review.created_by_auth_uid === user.id;
   };
 
   const handleAnonymousToggle = (checked: boolean) => {
@@ -292,26 +282,29 @@ export default function ProjectPage() {
     e.preventDefault();
     if (!project || rating === 0) return;
 
-    const sessionId = getSessionId();
     const reviewData: any = {
       project_id: project.id,
       rating,
       title: reviewTitle,
       review_text: reviewText,
-      session_id: sessionId,
     };
 
-    if (user && profile && !postAnonymously) {
-      reviewData.user_id = profile.id;
-      reviewData.review_identity_public = profile.review_identity_public ?? true;
-    } else if (user && profile && postAnonymously) {
-      reviewData.user_id = null;
-      reviewData.reviewer_name = null;
-      reviewData.reviewer_email = null;
+    if (user && profile) {
+      reviewData.created_by_auth_uid = user.id;
+
+      if (!postAnonymously) {
+        reviewData.user_id = profile.id;
+        reviewData.review_identity_public = profile.review_identity_public ?? true;
+      } else {
+        reviewData.user_id = null;
+        reviewData.reviewer_name = null;
+        reviewData.reviewer_email = null;
+      }
     } else {
       reviewData.reviewer_name = reviewerName || null;
       reviewData.reviewer_email = reviewerEmail || null;
       reviewData.user_id = null;
+      reviewData.created_by_auth_uid = null;
     }
 
     const { error } = await supabase.from('reviews').insert([reviewData]);
@@ -349,7 +342,6 @@ export default function ProjectPage() {
   const handleSaveEdit = async (review: Review) => {
     if (!project || editRating === 0) return;
 
-    const sessionId = getSessionId();
     const oldUserId = review.user_id;
     const updateData: any = {
       rating: editRating,
@@ -369,8 +361,7 @@ export default function ProjectPage() {
     const { error } = await supabase
       .from('reviews')
       .update(updateData)
-      .eq('id', review.id)
-      .eq('session_id', sessionId);
+      .eq('id', review.id);
 
     if (!error) {
       await supabase.rpc('recalculate_review_xp_on_edit', {
@@ -389,12 +380,10 @@ export default function ProjectPage() {
   const handleDeleteReview = async (reviewId: string) => {
     if (!confirm('Are you sure you want to delete this review?')) return;
 
-    const sessionId = getSessionId();
     const { error } = await supabase
       .from('reviews')
       .delete()
-      .eq('id', reviewId)
-      .eq('session_id', sessionId);
+      .eq('id', reviewId);
 
     if (!error && project) {
       await loadReviews(project.id);

@@ -27,6 +27,7 @@ export interface Review {
   reviewer_email?: string | null;
   review_identity_public?: boolean;
   session_id?: string | null;
+  created_by_auth_uid?: string | null;
   last_edited_at?: string | null;
   created_at: string;
   updated_at?: string;
@@ -41,6 +42,7 @@ export interface QuickFeedback {
   message: string;
   sentiment?: 'positive' | 'neutral' | 'negative';
   session_id?: string | null;
+  created_by_auth_uid?: string | null;
   last_edited_at?: string | null;
   created_at: string;
   profile?: Profile;
@@ -198,5 +200,6 @@ export interface IdeaReaction {
   project_id: string;
   user_id: string | null;
   reaction_type: 'need' | 'curious' | 'rethink';
+  created_by_auth_uid?: string | null;
   created_at: string;
 }
