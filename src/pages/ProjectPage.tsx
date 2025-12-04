@@ -703,7 +703,9 @@ export default function ProjectPage() {
                         </div>
                         <p className="text-slate-700 mb-2">{review.review_text}</p>
                         <div className="text-sm text-slate-500">
-                          {review.profile ? (
+                          {review.user_id === null ? (
+                            <span>Anonymous User</span>
+                          ) : review.profile && review.profile.review_identity_public ? (
                             <Link
                               to={`/creator/${review.profile.username}`}
                               className="text-blue-600 hover:text-blue-700 font-medium"
@@ -711,7 +713,7 @@ export default function ProjectPage() {
                               {review.profile.display_name}
                             </Link>
                           ) : (
-                            <span>{review.reviewer_name || 'Anonymous'}</span>
+                            <span>Private User</span>
                           )}
                         </div>
                       </div>

@@ -122,6 +122,7 @@ export interface Profile {
   avatar_url?: string;
   email_public: boolean;
   open_to_beta_test: boolean;
+  review_identity_public?: boolean;
   is_creator: boolean;
   is_idea_maker?: boolean;
   payment_provider?: PaymentProvider | null;

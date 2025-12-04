@@ -52,6 +52,7 @@ export default function Leaderboard() {
         .from('profiles')
         .select('id, username, display_name, avatar_url, total_xp, xp_level, leaderboard_rank, is_top_100, is_first_100')
         .eq('is_flagged_bot', false)
+        .gt('total_xp', 0)
         .not('leaderboard_rank', 'is', null)
         .lte('leaderboard_rank', 100)
         .order('leaderboard_rank', { ascending: true });
@@ -202,6 +203,21 @@ export default function Leaderboard() {
                 </span>{' '}
                 to reach the Top 100.
               </p>
+            </div>
+          </div>
+        )}
+
+        {userRank && (!userRank.total_xp || userRank.total_xp === 0) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center mt-6">
+            <Zap className="w-12 h-12 text-amber-600 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Start Your Journey!</h3>
+            <p className="text-gray-600 mb-4">
+              Earn your first XP to appear on the leaderboard. Publish projects, leave reviews, and engage with the community!
+            </p>
+            <div className="text-sm text-gray-500 space-y-1">
+              <p>Publish your first project: 50 XP</p>
+              <p>Leave a public review: 2 XP bonus</p>
+              <p>Submit project ideas: 5 XP</p>
             </div>
           </div>
         )}
