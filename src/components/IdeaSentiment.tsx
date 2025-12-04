@@ -22,14 +22,26 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string>('');
+
+  useEffect(() => {
+    const storedSessionId = localStorage.getItem('projecthub_session_id');
+    if (storedSessionId) {
+      setSessionId(storedSessionId);
+    } else {
+      const newSessionId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('projecthub_session_id', newSessionId);
+      setSessionId(newSessionId);
+    }
+  }, []);
 
   useEffect(() => {
     loadIdea();
     loadFeedback();
-    if (profile) {
+    if (sessionId) {
       loadUserReaction();
     }
-  }, [projectId, profile]);
+  }, [projectId, profile, sessionId]);
 
   const loadIdea = async () => {
     const { data, error } = await supabase
@@ -45,50 +57,87 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
   };
 
   const loadUserReaction = async () => {
-    if (!profile) return;
+    if (profile) {
+      const { data } = await supabase
+        .from('idea_reactions')
+        .select('reaction_type')
+        .eq('project_id', projectId)
+        .eq('user_id', profile.id)
+        .maybeSingle();
 
-    const { data } = await supabase
-      .from('idea_reactions')
-      .select('reaction_type')
-      .eq('project_id', projectId)
-      .eq('user_id', profile.id)
-      .maybeSingle();
+      if (data) {
+        setUserReaction(data.reaction_type);
+      }
+    } else if (sessionId) {
+      const { data } = await supabase
+        .from('idea_reactions')
+        .select('reaction_type')
+        .eq('project_id', projectId)
+        .eq('session_id', sessionId)
+        .is('user_id', null)
+        .maybeSingle();
 
-    if (data) {
-      setUserReaction(data.reaction_type);
+      if (data) {
+        setUserReaction(data.reaction_type);
+      }
     }
   };
 
   const handleReaction = async (type: 'need' | 'curious' | 'rethink') => {
-    if (!profile) {
-      alert('Please sign in to react to this idea');
-      return;
-    }
+    if (!sessionId) return;
 
     setReacting(true);
 
     try {
       if (userReaction === type) {
-        const { error } = await supabase
-          .from('idea_reactions')
-          .delete()
-          .eq('project_id', projectId)
-          .eq('user_id', profile.id);
+        if (profile) {
+          const { error } = await supabase
+            .from('idea_reactions')
+            .delete()
+            .eq('project_id', projectId)
+            .eq('user_id', profile.id);
 
-        if (!error) {
-          setUserReaction(null);
-          await loadIdea();
+          if (!error) {
+            setUserReaction(null);
+            await loadIdea();
+          }
+        } else {
+          const { error } = await supabase
+            .from('idea_reactions')
+            .delete()
+            .eq('project_id', projectId)
+            .eq('session_id', sessionId)
+            .is('user_id', null);
+
+          if (!error) {
+            setUserReaction(null);
+            await loadIdea();
+          }
         }
       } else {
-        const { error } = await supabase.from('idea_reactions').upsert({
-          project_id: projectId,
-          user_id: profile.id,
-          reaction_type: type,
-        });
+        if (profile) {
+          const { error } = await supabase.from('idea_reactions').upsert({
+            project_id: projectId,
+            user_id: profile.id,
+            reaction_type: type,
+          });
 
-        if (!error) {
-          setUserReaction(type);
-          await loadIdea();
+          if (!error) {
+            setUserReaction(type);
+            await loadIdea();
+          }
+        } else {
+          const { error } = await supabase.from('idea_reactions').insert({
+            project_id: projectId,
+            session_id: sessionId,
+            reaction_type: type,
+            user_id: null,
+          });
+
+          if (!error) {
+            setUserReaction(type);
+            await loadIdea();
+          }
         }
       }
     } catch (err) {
@@ -313,16 +362,25 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
           </div>
         )}
 
-        {!profile && (
+        {!profile && !userReaction && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Sign in</strong> to react to this idea and earn validator badges!
+              Rate this idea to see community feedback and share your thoughts!
+            </p>
+          </div>
+        )}
+
+        {!profile && userReaction && (
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-800">
+              <strong>Sign in</strong> to earn validator badges and build your reputation!
             </p>
           </div>
         )}
       </div>
 
-      <div className="border-t border-slate-200 pt-6">
+      {userReaction && (
+        <div className="border-t border-slate-200 pt-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
             <MessageSquare className="w-5 h-5 text-slate-600" />
@@ -433,7 +491,8 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
             <p className="text-sm">No feedback yet. Be the first to share your thoughts!</p>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
