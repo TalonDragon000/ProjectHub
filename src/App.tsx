@@ -8,7 +8,6 @@ import ProjectForm from './pages/ProjectForm';
 import AuthCallback from './pages/AuthCallback';
 import ProfilePage from './pages/ProfilePage';
 import ProfileSettings from './pages/ProfileSettings';
-import Leaderboard from './pages/Leaderboard';
 
 function App() {
   return (
@@ -18,7 +17,6 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/project/:slug" element={<ProjectPage />} />
           <Route path="/profile/:username" element={<ProfilePage />} />
           <Route path="/creator/:username" element={<ProfilePage />} />

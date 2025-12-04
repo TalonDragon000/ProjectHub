@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Upload, Save, X, Grid3x3, ArrowLeft, Check, Loader, DollarSign, Eye, Coins } from 'lucide-react';
+import { User, Upload, Save, X, Grid3x3, ArrowLeft, Check, Loader, DollarSign } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { PaymentProvider } from '../types';
@@ -15,7 +15,6 @@ export default function ProfileSettings() {
   const [bio, setBio] = useState('');
   const [emailPublic, setEmailPublic] = useState(false);
   const [openToBetaTest, setOpenToBetaTest] = useState(false);
-  const [reviewIdentityPublic, setReviewIdentityPublic] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState('');
@@ -40,7 +39,6 @@ export default function ProfileSettings() {
       setBio(profile.bio || '');
       setEmailPublic(profile.email_public);
       setOpenToBetaTest(profile.open_to_beta_test);
-      setReviewIdentityPublic(profile.review_identity_public || false);
       setAvatarUrl(profile.avatar_url || '');
       setAvatarPreview(profile.avatar_url || '');
       setPaymentProvider(profile.payment_provider || '');
@@ -155,9 +153,6 @@ export default function ProfileSettings() {
         }
       }
 
-      const wasPublicBefore = profile?.review_identity_public || false;
-      const isPublicNow = reviewIdentityPublic;
-
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -166,7 +161,6 @@ export default function ProfileSettings() {
           bio: bio.trim() || null,
           email_public: emailPublic,
           open_to_beta_test: openToBetaTest,
-          review_identity_public: reviewIdentityPublic,
           avatar_url: newAvatarUrl || null,
           payment_provider: paymentProvider || null,
           payment_username: paymentUsername.trim() || null,
@@ -174,13 +168,6 @@ export default function ProfileSettings() {
         .eq('id', profile?.id);
 
       if (updateError) throw updateError;
-
-      if (!wasPublicBefore && isPublicNow) {
-        const { error: xpError } = await supabase.rpc('award_retroactive_public_review_bonus');
-        if (xpError) {
-          console.error('Failed to award retroactive XP:', xpError);
-        }
-      }
 
       setSuccess('Profile updated successfully!');
       setAvatarFile(null);
@@ -414,35 +401,6 @@ export default function ProfileSettings() {
                     </label>
                     <p className="text-sm text-slate-600">
                       Project creators can see this badge on your profile, indicating you're available to test and provide feedback on new features and projects.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="text-xl font-semibold text-slate-900 mb-4 flex items-center space-x-2">
-                  <Eye className="w-5 h-5" />
-                  <span>Review Identity</span>
-                </h2>
-                <div className="flex items-start space-x-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <input
-                    type="checkbox"
-                    id="reviewIdentityPublic"
-                    checked={reviewIdentityPublic}
-                    onChange={(e) => setReviewIdentityPublic(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
-                  />
-                  <div className="flex-1">
-                    <label htmlFor="reviewIdentityPublic" className="text-sm font-medium text-slate-900 block mb-1 flex items-center space-x-2">
-                      <span>Show my identity on reviews</span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                        <Coins className="w-3 h-3 mr-1" />
-                        +2 XP per review
-                      </span>
-                    </label>
-                    <p className="text-sm text-slate-600">
-                      When enabled, your username and profile will be shown publicly on your reviews. You'll earn a bonus +2 XP for each review (including past reviews).
-                      When disabled, your reviews will be marked as "Private User".
                     </p>
                   </div>
                 </div>

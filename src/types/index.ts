@@ -122,7 +122,6 @@ export interface Profile {
   avatar_url?: string;
   email_public: boolean;
   open_to_beta_test: boolean;
-  review_identity_public?: boolean;
   is_creator: boolean;
   is_idea_maker?: boolean;
   payment_provider?: PaymentProvider | null;
@@ -132,13 +131,6 @@ export interface Profile {
   total_projects?: number;
   average_rating?: number;
   total_reviews?: number;
-  total_xp?: number;
-  xp_level?: number;
-  leaderboard_rank?: number | null;
-  is_first_100?: boolean;
-  is_top_100?: boolean;
-  bot_score?: number;
-  is_flagged_bot?: boolean;
 }
 
 export interface ProfileStats {
