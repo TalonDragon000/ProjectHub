@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Star, Briefcase, MessageSquare, Calendar, Award, Settings as SettingsIcon, Mail, X } from 'lucide-react';
+import { Star, Briefcase, MessageSquare, Calendar, Award, Settings as SettingsIcon, Mail, X, Trophy, Crown, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Profile, Review, Project } from '../types';
 import { format } from 'date-fns';
@@ -188,7 +188,19 @@ export default function ProfilePage() {
                     {profile.display_name}
                   </h1>
                   <p className="text-lg text-slate-500 mb-3">@{profile.username}</p>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {profile.is_first_100 && (
+                      <span className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-700 text-sm font-semibold rounded-full">
+                        <Crown className="w-4 h-4 mr-1" />
+                        First 100
+                      </span>
+                    )}
+                    {profile.is_top_100 && (
+                      <span className="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-semibold rounded-full">
+                        <Trophy className="w-4 h-4 mr-1" />
+                        Top 100
+                      </span>
+                    )}
                     {profile.open_to_beta_test && (
                       <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
                         <Award className="w-4 h-4 mr-1" />
@@ -208,6 +220,15 @@ export default function ProfilePage() {
                         </svg>
                         Idea Maker
                       </span>
+                    )}
+                    {profile.xp_level && profile.xp_level > 1 && (
+                      <Link
+                        to="/leaderboard"
+                        className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 text-sm font-semibold rounded-full hover:from-blue-200 hover:to-purple-200 transition-colors"
+                      >
+                        <Zap className="w-4 h-4 mr-1" />
+                        Level {profile.xp_level}
+                      </Link>
                     )}
                   </div>
                   {profile.bio && (
