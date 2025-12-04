@@ -25,6 +25,9 @@ export interface Review {
   review_text: string;
   reviewer_name?: string | null;
   reviewer_email?: string | null;
+  review_identity_public?: boolean;
+  session_id?: string | null;
+  last_edited_at?: string | null;
   created_at: string;
   updated_at?: string;
   is_verified: boolean;
@@ -34,9 +37,13 @@ export interface Review {
 export interface QuickFeedback {
   id: string;
   project_id: string;
+  user_id?: string | null;
   message: string;
   sentiment?: 'positive' | 'neutral' | 'negative';
+  session_id?: string | null;
+  last_edited_at?: string | null;
   created_at: string;
+  profile?: Profile;
 }
 
 export interface Feature {
@@ -124,6 +131,9 @@ export interface Profile {
   open_to_beta_test: boolean;
   is_creator: boolean;
   is_idea_maker?: boolean;
+  review_identity_public?: boolean;
+  post_reviews_anonymously?: boolean;
+  post_feedback_anonymously?: boolean;
   payment_provider?: PaymentProvider | null;
   payment_username?: string | null;
   created_at: string;
@@ -131,6 +141,7 @@ export interface Profile {
   total_projects?: number;
   average_rating?: number;
   total_reviews?: number;
+  total_xp?: number;
 }
 
 export interface ProfileStats {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Rocket, Eye, RefreshCw, MessageSquare, Check } from 'lucide-react';
+import { Rocket, Eye, RefreshCw, MessageSquare, Check, Edit, Trash2, Save, Ban } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { ProjectIdea, QuickFeedback, Profile } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,6 +23,10 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string>('');
+  const [postAnonymously, setPostAnonymously] = useState(false);
+  const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(null);
+  const [editMessage, setEditMessage] = useState('');
+  const [editAnonymously, setEditAnonymously] = useState(false);
 
   useEffect(() => {
     const storedSessionId = localStorage.getItem('projecthub_session_id');
@@ -34,6 +38,12 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
       setSessionId(newSessionId);
     }
   }, []);
+
+  useEffect(() => {
+    if (profile) {
+      setPostAnonymously(profile.post_feedback_anonymously ?? false);
+    }
+  }, [profile]);
 
   useEffect(() => {
     loadIdea();
@@ -176,6 +186,12 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
     }
   };
 
+  const canEditFeedback = (item: QuickFeedback) => {
+    if (profile && item.user_id === profile.id) return true;
+    if (!item.user_id && item.session_id === sessionId) return true;
+    return false;
+  };
+
   const handleSubmitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedbackMessage.trim()) return;
@@ -183,16 +199,25 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
     setSubmittingFeedback(true);
 
     try {
-      const { error } = await supabase.from('quick_feedback').insert({
+      const feedbackData: any = {
         project_id: projectId,
         message: feedbackMessage.trim(),
-        user_id: profile?.user_id || null,
-        reaction_type: userReaction,
-      });
+        sentiment: userReaction,
+        session_id: sessionId,
+      };
+
+      if (profile && !postAnonymously) {
+        feedbackData.user_id = profile.id;
+      } else {
+        feedbackData.user_id = null;
+      }
+
+      const { error } = await supabase.from('quick_feedback').insert(feedbackData);
 
       if (!error) {
         setFeedbackMessage('');
         setFeedbackSuccess(true);
+        setPostAnonymously(profile?.post_feedback_anonymously ?? false);
         await loadFeedback();
         setTimeout(() => setFeedbackSuccess(false), 3000);
       }
@@ -200,6 +225,66 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
       console.error('Error submitting feedback:', err);
     } finally {
       setSubmittingFeedback(false);
+    }
+  };
+
+  const handleStartEditFeedback = (item: QuickFeedback) => {
+    setEditingFeedbackId(item.id);
+    setEditMessage(item.message);
+    setEditAnonymously(!item.user_id);
+  };
+
+  const handleCancelEditFeedback = () => {
+    setEditingFeedbackId(null);
+    setEditMessage('');
+    setEditAnonymously(false);
+  };
+
+  const handleSaveEditFeedback = async () => {
+    if (!editMessage.trim() || !editingFeedbackId) return;
+
+    try {
+      const updateData: any = {
+        message: editMessage.trim(),
+        last_edited_at: new Date().toISOString(),
+      };
+
+      if (profile && !editAnonymously) {
+        updateData.user_id = profile.id;
+      } else {
+        updateData.user_id = null;
+      }
+
+      const { error } = await supabase
+        .from('quick_feedback')
+        .update(updateData)
+        .eq('id', editingFeedbackId)
+        .eq('session_id', sessionId);
+
+      if (!error) {
+        setEditingFeedbackId(null);
+        await loadFeedback();
+      }
+    } catch (err) {
+      console.error('Error updating feedback:', err);
+    }
+  };
+
+  const handleDeleteFeedback = async (feedbackId: string) => {
+    if (!confirm('Are you sure you want to delete this feedback?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('quick_feedback')
+        .delete()
+        .eq('id', feedbackId)
+        .eq('session_id', sessionId);
+
+      if (!error) {
+        await loadFeedback();
+      }
+    } catch (err) {
+      console.error('Error deleting feedback:', err);
     }
   };
 
@@ -400,7 +485,28 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
           )}
         </div>
 
-        <form onSubmit={handleSubmitFeedback} className="mb-6">
+        <form onSubmit={handleSubmitFeedback} className="mb-6 space-y-3">
+          {profile && (
+            <div className="flex items-start space-x-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <input
+                type="checkbox"
+                id="postFeedbackAnonymously"
+                checked={postAnonymously}
+                onChange={(e) => setPostAnonymously(e.target.checked)}
+                className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
+              />
+              <div className="flex-1">
+                <label htmlFor="postFeedbackAnonymously" className="text-sm font-medium text-slate-900 block cursor-pointer">
+                  Post anonymously
+                </label>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  {postAnonymously
+                    ? 'Your name will not appear on this feedback'
+                    : 'Your name will appear with this feedback'}
+                </p>
+              </div>
+            </div>
+          )}
           <textarea
             value={feedbackMessage}
             onChange={(e) => setFeedbackMessage(e.target.value)}
@@ -409,7 +515,7 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
             placeholder="Share your thoughts: affirm, question, suggest alternatives, or share your experience..."
           />
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">
               {feedbackMessage.length}/500 characters
             </span>
@@ -438,56 +544,121 @@ export default function IdeaSentiment({ projectId, compact = false, showDetails 
         {feedback.length > 0 && (
           <div className="space-y-3">
             {feedback.map((item) => {
-              const bgColor = item.reaction_type === 'need'
+              const bgColor = item.sentiment === 'need'
                 ? 'bg-green-50 border-green-100'
-                : item.reaction_type === 'curious'
+                : item.sentiment === 'curious'
                 ? 'bg-amber-50 border-amber-100'
-                : item.reaction_type === 'rethink'
+                : item.sentiment === 'rethink'
                 ? 'bg-slate-50 border-slate-100'
                 : 'bg-slate-50 border-slate-100';
 
               return (
                 <div key={item.id} className={`rounded-lg p-4 border ${bgColor}`}>
-                  <div className="flex items-start space-x-3">
-                    {item.profile ? (
-                      <div className="flex-shrink-0">
-                        {item.profile.avatar_url ? (
-                          <img
-                            src={item.profile.avatar_url}
-                            alt={item.profile.display_name}
-                            className="w-8 h-8 rounded-full"
+                  {editingFeedbackId === item.id ? (
+                    <div className="space-y-3">
+                      {profile && (
+                        <div className="flex items-start space-x-3 p-2 bg-white border border-slate-200 rounded">
+                          <input
+                            type="checkbox"
+                            id="editFeedbackAnonymously"
+                            checked={editAnonymously}
+                            onChange={(e) => setEditAnonymously(e.target.checked)}
+                            className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
                           />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center">
-                            <span className="text-xs font-medium text-slate-600">
-                              {item.profile.display_name.charAt(0).toUpperCase()}
+                          <label htmlFor="editFeedbackAnonymously" className="text-xs text-slate-700">
+                            Post anonymously
+                          </label>
+                        </div>
+                      )}
+                      <textarea
+                        value={editMessage}
+                        onChange={(e) => setEditMessage(e.target.value)}
+                        rows={3}
+                        maxLength={500}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-sm"
+                      />
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={handleSaveEditFeedback}
+                          className="flex items-center space-x-1 px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+                        >
+                          <Save className="w-3 h-3" />
+                          <span>Save</span>
+                        </button>
+                        <button
+                          onClick={handleCancelEditFeedback}
+                          className="flex items-center space-x-1 px-3 py-1.5 bg-slate-200 text-slate-700 rounded text-sm hover:bg-slate-300 transition-colors"
+                        >
+                          <Ban className="w-3 h-3" />
+                          <span>Cancel</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start space-x-3">
+                      {item.profile ? (
+                        <div className="flex-shrink-0">
+                          {item.profile.avatar_url ? (
+                            <img
+                              src={item.profile.avatar_url}
+                              alt={item.profile.display_name}
+                              className="w-8 h-8 rounded-full"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center">
+                              <span className="text-xs font-medium text-slate-600">
+                                {item.profile.display_name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                            <span className="text-xs font-medium text-slate-500">?</span>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center space-x-2">
+                            {item.profile ? (
+                              <span className="text-sm font-medium text-slate-900">
+                                {item.profile.display_name}
+                              </span>
+                            ) : (
+                              <span className="text-sm font-medium text-slate-500">Anonymous</span>
+                            )}
+                            <span className="text-xs text-slate-500">
+                              {format(new Date(item.created_at), 'MMM d, yyyy')}
+                              {item.last_edited_at && (
+                                <span className="ml-1 text-xs text-slate-400">(edited)</span>
+                              )}
                             </span>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                          <span className="text-xs font-medium text-slate-500">?</span>
+                          {canEditFeedback(item) && (
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() => handleStartEditFeedback(item)}
+                                className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Edit feedback"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteFeedback(item.id)}
+                                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title="Delete feedback"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </div>
+                        <p className="text-sm text-slate-700 leading-relaxed">{item.message}</p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        {item.profile ? (
-                          <span className="text-sm font-medium text-slate-900">
-                            {item.profile.display_name}
-                          </span>
-                        ) : (
-                          <span className="text-sm font-medium text-slate-500">Anonymous</span>
-                        )}
-                        <span className="text-xs text-slate-500">
-                          {format(new Date(item.created_at), 'MMM d, yyyy')}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-700 leading-relaxed">{item.message}</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}

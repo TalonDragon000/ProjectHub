@@ -14,6 +14,10 @@ import {
   MonitorPlay,
   AlertTriangle,
   X,
+  Edit,
+  Trash2,
+  Save,
+  Ban,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import {
@@ -30,6 +34,7 @@ import { useAuth } from '../contexts/AuthContext';
 import IdeaSentiment from '../components/IdeaSentiment';
 import AccordionSection from '../components/AccordionSection';
 import NavBar from '../components/NavBar';
+import XPIndicator from '../components/XPIndicator';
 
 type FlowSection = 'discover' | 'validate' | 'try' | 'review';
 
@@ -50,12 +55,74 @@ export default function ProjectPage() {
   const [reviewText, setReviewText] = useState('');
   const [reviewerName, setReviewerName] = useState('');
   const [reviewerEmail, setReviewerEmail] = useState('');
+  const [postAnonymously, setPostAnonymously] = useState(false);
+  const [showXPIndicator, setShowXPIndicator] = useState(false);
+  const [xpAmount, setXpAmount] = useState(0);
   const [submitSuccess, setSubmitSuccess] = useState('');
   const [idea, setIdea] = useState<ProjectIdea | null>(null);
   const [ideaLoading, setIdeaLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<FlowSection>('discover');
   const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState(0);
+  const [editTitle, setEditTitle] = useState('');
+  const [editText, setEditText] = useState('');
+  const [editAnonymously, setEditAnonymously] = useState(false);
+  const [editShowXPIndicator, setEditShowXPIndicator] = useState(false);
+  const [editXpAmount, setEditXpAmount] = useState(0);
+
+  const getSessionId = () => {
+    let sessionId = localStorage.getItem('projecthub_session_id');
+    if (!sessionId) {
+      sessionId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('projecthub_session_id', sessionId);
+    }
+    return sessionId;
+  };
+
+  const canEditReview = (review: Review) => {
+    if (user && profile && review.user_id === profile.id) return true;
+    if (!review.user_id && review.session_id === getSessionId()) return true;
+    return false;
+  };
+
+  const handleAnonymousToggle = (checked: boolean) => {
+    setPostAnonymously(checked);
+    if (user && profile) {
+      const xp = checked ? -2 : 2;
+      setXpAmount(xp);
+      setShowXPIndicator(true);
+      setTimeout(() => setShowXPIndicator(false), 3000);
+    }
+  };
+
+  const handleEditAnonymousToggle = (checked: boolean, review: Review) => {
+    setEditAnonymously(checked);
+    if (user && profile) {
+      const wasAnonymous = !review.user_id;
+      const willBeAnonymous = checked;
+      let xp = 0;
+
+      if (wasAnonymous && !willBeAnonymous && profile.review_identity_public) {
+        xp = 2;
+      } else if (!wasAnonymous && willBeAnonymous) {
+        xp = -2;
+      } else if (!wasAnonymous && !willBeAnonymous) {
+        xp = 0;
+      }
+
+      setEditXpAmount(xp);
+      setEditShowXPIndicator(true);
+      setTimeout(() => setEditShowXPIndicator(false), 3000);
+    }
+  };
+
+  useEffect(() => {
+    if (profile) {
+      setPostAnonymously(profile.post_reviews_anonymously ?? false);
+    }
+  }, [profile]);
 
   const handleSectionToggle = (section: FlowSection) => {
     if (section === 'try' && !disclaimerAcknowledged) {
@@ -225,15 +292,22 @@ export default function ProjectPage() {
     e.preventDefault();
     if (!project || rating === 0) return;
 
+    const sessionId = getSessionId();
     const reviewData: any = {
       project_id: project.id,
       rating,
       title: reviewTitle,
       review_text: reviewText,
+      session_id: sessionId,
     };
 
-    if (user && profile) {
+    if (user && profile && !postAnonymously) {
       reviewData.user_id = profile.id;
+      reviewData.review_identity_public = profile.review_identity_public ?? true;
+    } else if (user && profile && postAnonymously) {
+      reviewData.user_id = null;
+      reviewData.reviewer_name = null;
+      reviewData.reviewer_email = null;
     } else {
       reviewData.reviewer_name = reviewerName || null;
       reviewData.reviewer_email = reviewerEmail || null;
@@ -249,9 +323,82 @@ export default function ProjectPage() {
       setReviewText('');
       setReviewerName('');
       setReviewerEmail('');
+      setPostAnonymously(profile?.post_reviews_anonymously ?? false);
       await loadReviews(project.id);
       await refreshProjectRatings();
       setTimeout(() => setSubmitSuccess(''), 3000);
+    }
+  };
+
+  const handleStartEdit = (review: Review) => {
+    setEditingReviewId(review.id);
+    setEditRating(review.rating);
+    setEditTitle(review.title);
+    setEditText(review.review_text);
+    setEditAnonymously(!review.user_id);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReviewId(null);
+    setEditRating(0);
+    setEditTitle('');
+    setEditText('');
+    setEditAnonymously(false);
+  };
+
+  const handleSaveEdit = async (review: Review) => {
+    if (!project || editRating === 0) return;
+
+    const sessionId = getSessionId();
+    const oldUserId = review.user_id;
+    const updateData: any = {
+      rating: editRating,
+      title: editTitle,
+      review_text: editText,
+      last_edited_at: new Date().toISOString(),
+    };
+
+    if (user && profile && !editAnonymously) {
+      updateData.user_id = profile.id;
+      updateData.review_identity_public = profile.review_identity_public ?? true;
+    } else {
+      updateData.user_id = null;
+      updateData.review_identity_public = false;
+    }
+
+    const { error } = await supabase
+      .from('reviews')
+      .update(updateData)
+      .eq('id', review.id)
+      .eq('session_id', sessionId);
+
+    if (!error) {
+      await supabase.rpc('recalculate_review_xp_on_edit', {
+        p_review_id: review.id,
+        p_old_user_id: oldUserId,
+        p_new_user_id: updateData.user_id,
+        p_review_identity_public: updateData.review_identity_public,
+      });
+
+      setEditingReviewId(null);
+      await loadReviews(project.id);
+      await refreshProjectRatings();
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+
+    const sessionId = getSessionId();
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', reviewId)
+      .eq('session_id', sessionId);
+
+    if (!error && project) {
+      await loadReviews(project.id);
+      await refreshProjectRatings();
     }
   };
 
@@ -568,10 +715,36 @@ export default function ProjectPage() {
                   )}
                   <form onSubmit={handleSubmitReview} className="space-y-4">
                     {user && profile ? (
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center space-x-2 text-blue-800">
-                          <User className="w-4 h-4" />
-                          <span className="text-sm font-medium">Posting as {profile.display_name}</span>
+                      <div className="space-y-3">
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center space-x-2 text-blue-800">
+                            <User className="w-4 h-4" />
+                            <span className="text-sm font-medium">
+                              {postAnonymously ? 'Posting anonymously' : `Posting as ${profile.display_name}`}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="relative flex items-start space-x-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                          <input
+                            type="checkbox"
+                            id="postAnonymously"
+                            checked={postAnonymously}
+                            onChange={(e) => handleAnonymousToggle(e.target.checked)}
+                            className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
+                          />
+                          <div className="flex-1">
+                            <label htmlFor="postAnonymously" className="text-sm font-medium text-slate-900 block cursor-pointer">
+                              Post anonymously
+                            </label>
+                            <p className="text-xs text-slate-600 mt-0.5">
+                              {postAnonymously
+                                ? 'Your name will not appear on this review (no XP earned)'
+                                : profile.review_identity_public
+                                ? 'Your name will appear publicly (+2 XP bonus!)'
+                                : 'Your name will appear as "Anonymous Reviewer"'}
+                            </p>
+                          </div>
+                          <XPIndicator show={showXPIndicator} amount={xpAmount} />
                         </div>
                       </div>
                     ) : (
@@ -581,7 +754,7 @@ export default function ProjectPage() {
                           <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
                             Sign in
                           </Link>{' '}
-                          to post as yourself.
+                          to claim credit and earn XP.
                         </p>
                       </div>
                     )}
@@ -683,37 +856,150 @@ export default function ProjectPage() {
                   <div className="space-y-6">
                     {reviews.map((review) => (
                       <div key={review.id} className="border-b border-slate-200 pb-6 last:border-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <div className="flex items-center space-x-1 mb-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-4 h-4 ${
-                                    i < review.rating ? 'text-yellow-400 fill-current' : 'text-slate-300'
-                                  }`}
-                                />
-                              ))}
+                        {editingReviewId === review.id ? (
+                          <div className="space-y-4 bg-slate-50 p-4 rounded-lg">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-2">Rating</label>
+                              <div className="flex space-x-2">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() => setEditRating(star)}
+                                    className="focus:outline-none"
+                                  >
+                                    <Star
+                                      className={`w-6 h-6 transition-colors ${
+                                        star <= editRating ? 'text-yellow-400 fill-current' : 'text-slate-300'
+                                      }`}
+                                    />
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                            <h4 className="font-bold text-slate-900">{review.title}</h4>
+
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-2">Title</label>
+                              <input
+                                type="text"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-2">Review</label>
+                              <textarea
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                rows={4}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                                required
+                              />
+                            </div>
+
+                            {user && profile && (
+                              <div className="relative flex items-start space-x-3 p-3 bg-white border border-slate-200 rounded-lg">
+                                <input
+                                  type="checkbox"
+                                  id="editAnonymously"
+                                  checked={editAnonymously}
+                                  onChange={(e) => handleEditAnonymousToggle(e.target.checked, review)}
+                                  className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
+                                />
+                                <div className="flex-1">
+                                  <label htmlFor="editAnonymously" className="text-sm font-medium text-slate-900 block cursor-pointer">
+                                    Post anonymously
+                                  </label>
+                                  <p className="text-xs text-slate-600 mt-0.5">
+                                    {editAnonymously
+                                      ? 'Your name will not appear on this review (no XP)'
+                                      : profile.review_identity_public
+                                      ? 'Your name will appear publicly (+2 XP)'
+                                      : 'Your name will appear as "Anonymous Reviewer"'}
+                                  </p>
+                                </div>
+                                <XPIndicator show={editShowXPIndicator} amount={editXpAmount} />
+                              </div>
+                            )}
+
+                            <div className="flex items-center space-x-3">
+                              <button
+                                onClick={() => handleSaveEdit(review)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              >
+                                <Save className="w-4 h-4" />
+                                <span>Save</span>
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="flex items-center space-x-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
+                              >
+                                <Ban className="w-4 h-4" />
+                                <span>Cancel</span>
+                              </button>
+                            </div>
                           </div>
-                          <span className="text-sm text-slate-500">
-                            {format(new Date(review.created_at), 'MMM d, yyyy')}
-                          </span>
-                        </div>
-                        <p className="text-slate-700 mb-2">{review.review_text}</p>
-                        <div className="text-sm text-slate-500">
-                          {review.profile ? (
-                            <Link
-                              to={`/creator/${review.profile.username}`}
-                              className="text-blue-600 hover:text-blue-700 font-medium"
-                            >
-                              {review.profile.display_name}
-                            </Link>
-                          ) : (
-                            <span>{review.reviewer_name || 'Anonymous'}</span>
-                          )}
-                        </div>
+                        ) : (
+                          <>
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <div className="flex items-center space-x-1 mb-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < review.rating ? 'text-yellow-400 fill-current' : 'text-slate-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <h4 className="font-bold text-slate-900">{review.title}</h4>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-slate-500">
+                                  {format(new Date(review.created_at), 'MMM d, yyyy')}
+                                  {review.last_edited_at && (
+                                    <span className="ml-2 text-xs text-slate-400">(edited)</span>
+                                  )}
+                                </span>
+                                {canEditReview(review) && (
+                                  <div className="flex items-center space-x-1">
+                                    <button
+                                      onClick={() => handleStartEdit(review)}
+                                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                      title="Edit review"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteReview(review.id)}
+                                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                      title="Delete review"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-slate-700 mb-2">{review.review_text}</p>
+                            <div className="text-sm text-slate-500">
+                              {review.profile && review.review_identity_public ? (
+                                <Link
+                                  to={`/creator/${review.profile.username}`}
+                                  className="text-blue-600 hover:text-blue-700 font-medium"
+                                >
+                                  {review.profile.display_name}
+                                </Link>
+                              ) : (
+                                <span>{review.reviewer_name || 'Anonymous Reviewer'}</span>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
                     {reviews.length === 0 && (

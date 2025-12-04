@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes fadeUpOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(-5px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(-10px);
+  }
+}

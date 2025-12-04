@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Upload, Save, X, Grid3x3, ArrowLeft, Check, Loader, DollarSign } from 'lucide-react';
+import { User, Upload, Save, X, Grid3x3, ArrowLeft, Check, Loader, DollarSign, Shield, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { PaymentProvider } from '../types';
@@ -23,6 +23,9 @@ export default function ProfileSettings() {
   const [usernameChecking, setUsernameChecking] = useState(false);
   const [paymentProvider, setPaymentProvider] = useState<PaymentProvider | ''>('');
   const [paymentUsername, setPaymentUsername] = useState('');
+  const [reviewIdentityPublic, setReviewIdentityPublic] = useState(true);
+  const [postReviewsAnonymously, setPostReviewsAnonymously] = useState(false);
+  const [postFeedbackAnonymously, setPostFeedbackAnonymously] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -43,6 +46,9 @@ export default function ProfileSettings() {
       setAvatarPreview(profile.avatar_url || '');
       setPaymentProvider(profile.payment_provider || '');
       setPaymentUsername(profile.payment_username || '');
+      setReviewIdentityPublic(profile.review_identity_public ?? true);
+      setPostReviewsAnonymously(profile.post_reviews_anonymously ?? false);
+      setPostFeedbackAnonymously(profile.post_feedback_anonymously ?? false);
     }
   }, [user, profile, navigate]);
 
@@ -164,6 +170,9 @@ export default function ProfileSettings() {
           avatar_url: newAvatarUrl || null,
           payment_provider: paymentProvider || null,
           payment_username: paymentUsername.trim() || null,
+          review_identity_public: reviewIdentityPublic,
+          post_reviews_anonymously: postReviewsAnonymously,
+          post_feedback_anonymously: postFeedbackAnonymously,
         })
         .eq('id', profile?.id);
 
@@ -382,6 +391,90 @@ export default function ProfileSettings() {
                     maxLength={500}
                   />
                   <p className="text-sm text-slate-500 mt-1">{bio.length}/500 characters</p>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 mb-4 flex items-center space-x-2">
+                  <Shield className="w-5 h-5" />
+                  <span>Privacy & Anonymity</span>
+                </h2>
+                <p className="text-sm text-slate-600 mb-4">
+                  Control how your identity appears when posting reviews and feedback.
+                </p>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="reviewIdentityPublic"
+                        checked={reviewIdentityPublic}
+                        onChange={(e) => setReviewIdentityPublic(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="reviewIdentityPublic" className="text-sm font-medium text-slate-900 block mb-1">
+                          Show my name on reviews I post <span className="text-green-600 font-semibold">(+2 XP per review)</span>
+                        </label>
+                        <p className="text-sm text-slate-600">
+                          When enabled, your username will appear publicly on reviews. This transparency earns you bonus XP! If disabled, reviews show "Anonymous Reviewer" and earn no XP bonus.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="postReviewsAnonymously"
+                        checked={postReviewsAnonymously}
+                        onChange={(e) => setPostReviewsAnonymously(e.target.checked)}
+                        className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="postReviewsAnonymously" className="text-sm font-medium text-slate-900 block mb-1">
+                          Post reviews anonymously by default
+                        </label>
+                        <p className="text-sm text-slate-600">
+                          When enabled, the "Post anonymously" checkbox will be checked by default when writing reviews. You can still toggle it per review.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="postFeedbackAnonymously"
+                        checked={postFeedbackAnonymously}
+                        onChange={(e) => setPostFeedbackAnonymously(e.target.checked)}
+                        className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="postFeedbackAnonymously" className="text-sm font-medium text-slate-900 block mb-1">
+                          Post idea feedback anonymously by default
+                        </label>
+                        <p className="text-sm text-slate-600">
+                          When enabled, the "Post anonymously" checkbox will be checked by default when submitting idea feedback. You can still toggle it per submission.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2">
+                    <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-amber-800">
+                      <p className="font-medium mb-1">About anonymous posts:</p>
+                      <ul className="list-disc list-inside space-y-1 text-amber-700">
+                        <li>You can edit or delete your anonymous posts until you clear your browser data</li>
+                        <li>Anonymous posts don't earn XP rewards</li>
+                        <li>Logged-in users can always claim credit by unchecking "Post anonymously"</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </div>
 
