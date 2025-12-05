@@ -131,6 +131,59 @@ CREATE POLICY "Users can delete own feedback via user_id or session_id"
     (session_id IS NOT NULL AND session_id = current_setting('request.headers', true)::json->>'x-session-id')
   );
 
+-- Helper to revoke XP with logging and level recalculation
+CREATE OR REPLACE FUNCTION revoke_xp(
+  target_profile_id uuid,
+  xp_amount integer,
+  xp_reason text,
+  related_project_id uuid DEFAULT NULL,
+  related_idea_id uuid DEFAULT NULL,
+  related_review_id uuid DEFAULT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_xp integer;
+  new_xp integer;
+  new_level integer;
+BEGIN
+  SELECT total_xp INTO current_xp
+  FROM profiles
+  WHERE id = target_profile_id;
+
+  new_xp := GREATEST(0, current_xp - xp_amount);
+  new_level := calculate_xp_level(new_xp);
+
+  UPDATE profiles
+  SET
+    total_xp = new_xp,
+    xp_level = new_level,
+    last_xp_award_at = now()
+  WHERE id = target_profile_id;
+
+  INSERT INTO xp_transactions (
+    profile_id,
+    xp_amount,
+    xp_reason,
+    related_project_id,
+    related_idea_id,
+    related_review_id,
+    metadata
+  ) VALUES (
+    target_profile_id,
+    -1 * xp_amount,
+    xp_reason,
+    related_project_id,
+    related_idea_id,
+    related_review_id,
+    metadata || jsonb_build_object('revoked', true)
+  );
+END;
+$$;
+
 -- Create function to recalculate XP when review anonymity changes
 CREATE OR REPLACE FUNCTION recalculate_review_xp_on_edit(
   p_review_id uuid,
@@ -143,52 +196,96 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_project_creator_id uuid;
+  v_project_id uuid;
   v_existing_xp_transaction_id uuid;
 BEGIN
-  -- Get the project creator ID
-  SELECT p.creator_id INTO v_project_creator_id
-  FROM reviews r
-  JOIN projects p ON r.project_id = p.id
-  WHERE r.id = p_review_id;
-
-  -- Check if there's already an XP transaction for this review
-  SELECT id INTO v_existing_xp_transaction_id
-  FROM xp_transactions
-  WHERE review_id = p_review_id
-  AND transaction_type = 'review_public_identity';
+  -- Get the project ID for context
+  SELECT project_id INTO v_project_id
+  FROM reviews
+  WHERE id = p_review_id;
 
   -- Case 1: Going from anonymous (NULL) to authenticated with public identity
   IF p_old_user_id IS NULL AND p_new_user_id IS NOT NULL AND p_review_identity_public = true THEN
-    -- Award +2 XP to reviewer
+    -- Award +2 XP to reviewer if not already awarded
+    SELECT id INTO v_existing_xp_transaction_id
+    FROM xp_transactions
+    WHERE profile_id = p_new_user_id
+      AND xp_reason = 'public_review_bonus'
+      AND related_review_id = p_review_id;
+
     IF v_existing_xp_transaction_id IS NULL THEN
-      INSERT INTO xp_transactions (user_id, amount, transaction_type, review_id)
-      VALUES (p_new_user_id, 2, 'review_public_identity', p_review_id);
-      
-      UPDATE profiles SET total_xp = total_xp + 2 WHERE id = p_new_user_id;
+      PERFORM award_xp(
+        p_new_user_id,
+        2,
+        'public_review_bonus',
+        v_project_id,
+        NULL,
+        p_review_id,
+        jsonb_build_object('retroactive_edit', true)
+      );
     END IF;
 
   -- Case 2: Going from authenticated to anonymous
   ELSIF p_old_user_id IS NOT NULL AND p_new_user_id IS NULL THEN
     -- Revoke +2 XP from reviewer if they had it
+    SELECT id INTO v_existing_xp_transaction_id
+    FROM xp_transactions
+    WHERE profile_id = p_old_user_id
+      AND xp_reason = 'public_review_bonus'
+      AND related_review_id = p_review_id;
+
     IF v_existing_xp_transaction_id IS NOT NULL THEN
-      DELETE FROM xp_transactions WHERE id = v_existing_xp_transaction_id;
-      UPDATE profiles SET total_xp = GREATEST(0, total_xp - 2) WHERE id = p_old_user_id;
+      PERFORM revoke_xp(
+        p_old_user_id,
+        2,
+        'public_review_bonus',
+        v_project_id,
+        NULL,
+        p_review_id,
+        jsonb_build_object('retroactive_edit', true)
+      );
     END IF;
 
   -- Case 3: Staying authenticated but toggling review_identity_public
   ELSIF p_old_user_id IS NOT NULL AND p_new_user_id IS NOT NULL AND p_old_user_id = p_new_user_id THEN
-    IF p_review_identity_public = true AND v_existing_xp_transaction_id IS NULL THEN
-      -- Award +2 XP
-      INSERT INTO xp_transactions (user_id, amount, transaction_type, review_id)
-      VALUES (p_new_user_id, 2, 'review_public_identity', p_review_id);
+    IF p_review_identity_public = true THEN
+      SELECT id INTO v_existing_xp_transaction_id
+      FROM xp_transactions
+      WHERE profile_id = p_new_user_id
+        AND xp_reason = 'public_review_bonus'
+        AND related_review_id = p_review_id;
+
+      IF v_existing_xp_transaction_id IS NULL THEN
+        PERFORM award_xp(
+          p_new_user_id,
+          2,
+          'public_review_bonus',
+          v_project_id,
+          NULL,
+          p_review_id,
+          jsonb_build_object('retroactive_edit', true)
+        );
+      END IF;
       
-      UPDATE profiles SET total_xp = total_xp + 2 WHERE id = p_new_user_id;
-      
-    ELSIF p_review_identity_public = false AND v_existing_xp_transaction_id IS NOT NULL THEN
-      -- Revoke +2 XP
-      DELETE FROM xp_transactions WHERE id = v_existing_xp_transaction_id;
-      UPDATE profiles SET total_xp = GREATEST(0, total_xp - 2) WHERE id = p_new_user_id;
+    ELSIF p_review_identity_public = false THEN
+      SELECT id INTO v_existing_xp_transaction_id
+      FROM xp_transactions
+      WHERE profile_id = p_new_user_id
+        AND xp_reason = 'public_review_bonus'
+        AND related_review_id = p_review_id;
+
+      IF v_existing_xp_transaction_id IS NOT NULL THEN
+        -- Revoke +2 XP
+        PERFORM revoke_xp(
+          p_new_user_id,
+          2,
+          'public_review_bonus',
+          v_project_id,
+          NULL,
+          p_review_id,
+          jsonb_build_object('retroactive_edit', true)
+        );
+      END IF;
     END IF;
   END IF;
 END;
