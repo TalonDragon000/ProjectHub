@@ -624,7 +624,7 @@ export default function ProjectForm() {
                   URL Slug *
                 </label>
                 <div className="flex items-center space-x-2">
-                  <span className="text-slate-500">projecthub.com/project/</span>
+                  <span className="text-slate-500">projecthub.bolt.host/project/</span>
                   <input
                     type="text"
                     value={slug}
