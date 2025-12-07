@@ -178,3 +178,5 @@ Built with love for the indie creator community.
 - [Tailwind CSS](https://tailwindcss.com/) - Styling framework
 - [Lucide](https://lucide.dev/) - Beautiful icons
 - [React](https://react.dev/) - UI framework
+- [Bolt](https://bolt.new) - Host & initial design
+- [Cursor](https://cursor.com) - Debugging
