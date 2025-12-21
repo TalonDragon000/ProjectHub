@@ -77,7 +77,10 @@ export default function MessagesView() {
 
     const { data, error } = await supabase
       .from('conversations')
-      .select('*, participant_1:profiles!conversations_participant_1_id_fkey(*), participant_2:profiles!conversations_participant_2_id_fkey(*)')
+      .select(`
+        *, 
+        participant_1:profiles!conversations_participant_1_id_fkey(*), participant_2:profiles!conversations_participant_2_id_fkey(*)
+        `)
       .or(`participant_1_id.eq.${profile.id},participant_2_id.eq.${profile.id}`)
       .order('last_message_at', { ascending: false });
 

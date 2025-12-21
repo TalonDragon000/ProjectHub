@@ -142,6 +142,13 @@ export default function ProfilePage() {
       return;
     }
 
+    // Check if the profile allows messages
+    if (!profile?.allow_messages_from_users) {
+      // Show a toast or alert
+      alert('This user has disabled direct messages.');
+      return;
+    }
+
     if (!currentUserProfile || !profile) return;
 
     setSendingMessage(true);
@@ -216,7 +223,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                {!isOwnProfile && (
+                {!isOwnProfile && profile.allow_messages_from_users && (
                   <button
                     onClick={handleSendMessage}
                     disabled={sendingMessage}
@@ -226,14 +233,11 @@ export default function ProfilePage() {
                     <span>{sendingMessage ? 'Loading...' : 'Send Message'}</span>
                   </button>
                 )}
-                {isOwnProfile && (
-                  <Link
-                    to="/dashboard/settings"
-                    className="flex items-center space-x-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
-                  >
-                    <SettingsIcon className="w-4 h-4" />
-                    <span>Edit Profile</span>
-                  </Link>
+                {!isOwnProfile && !profile.allow_messages_from_users && (
+                  <span className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-700 text-sm font-semibold rounded-full invisible">
+                    {/* <Mail className="w-4 h-4 mr-1" /> */}
+                    {/* <span>Disabled</span> */}
+                  </span>
                 )}
               </div>
             </div>

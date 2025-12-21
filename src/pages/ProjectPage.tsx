@@ -13,11 +13,7 @@ import {
   UsersRound,
   MonitorPlay,
   AlertTriangle,
-  X,
-  Edit,
-  Trash2,
-  Save,
-  Ban,
+  X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import {
@@ -28,13 +24,18 @@ import {
   ProjectLink,
   Profile,
   ProjectIdea,
+  QuickFeedback,
 } from '../types';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
-import IdeaSentiment from '../components/IdeaSentiment';
+import IdeaReactions from '../components/IdeaReactions';
+import IdeaFeedback from '../components/IdeaFeedback';
+import ReviewForm from '../components/ReviewForm';
+import ReviewsList from '../components/ReviewsList';
 import AccordionSection from '../components/AccordionSection';
 import NavBar from '../components/NavBar';
 import XPIndicator from '../components/XPIndicator';
+import DemoDisclaimerModal from '../components/DemoDisclaimerModal';
 
 type FlowSection = 'discover' | 'validate' | 'try' | 'review';
 
@@ -43,90 +44,22 @@ export default function ProjectPage() {
   const { user, profile } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [creator, setCreator] = useState<Profile | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [features, setFeatures] = useState<Feature[]>([]);
   const [links, setLinks] = useState<ProjectLink[]>([]);
   const [donationGoals, setDonationGoals] = useState<DonationGoal[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [reviewTitle, setReviewTitle] = useState('');
-  const [reviewText, setReviewText] = useState('');
-  const [reviewerName, setReviewerName] = useState('');
-  const [reviewerEmail, setReviewerEmail] = useState('');
-  const [postAnonymously, setPostAnonymously] = useState(false);
-  const [showXPIndicator, setShowXPIndicator] = useState(false);
-  const [xpAmount, setXpAmount] = useState(0);
-  const [submitSuccess, setSubmitSuccess] = useState('');
   const [idea, setIdea] = useState<ProjectIdea | null>(null);
   const [ideaLoading, setIdeaLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<FlowSection>('discover');
   const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
-  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
-  const [editRating, setEditRating] = useState(0);
-  const [editTitle, setEditTitle] = useState('');
-  const [editText, setEditText] = useState('');
-  const [editAnonymously, setEditAnonymously] = useState(false);
-  const [editShowXPIndicator, setEditShowXPIndicator] = useState(false);
-  const [editXpAmount, setEditXpAmount] = useState(0);
-
-  const canEditReview = (review: Review) => {
-    if (!user) return false;
-    return review.created_by_auth_uid === user.id;
-  };
-
-  const handleAnonymousToggle = (checked: boolean) => {
-    setPostAnonymously(checked);
-    if (user && profile) {
-      const xp = checked ? -2 : 2;
-      setXpAmount(xp);
-      setShowXPIndicator(true);
-      setTimeout(() => setShowXPIndicator(false), 3000);
-    }
-  };
-
-  const handleEditAnonymousToggle = (checked: boolean, review: Review) => {
-    setEditAnonymously(checked);
-    if (user && profile) {
-      const wasAnonymous = !review.user_id;
-      const willBeAnonymous = checked;
-      let xp = 0;
-
-      if (wasAnonymous && !willBeAnonymous && profile.review_identity_public) {
-        xp = 2;
-      } else if (!wasAnonymous && willBeAnonymous) {
-        xp = -2;
-      } else if (!wasAnonymous && !willBeAnonymous) {
-        xp = 0;
-      }
-
-      setEditXpAmount(xp);
-      setEditShowXPIndicator(true);
-      setTimeout(() => setEditShowXPIndicator(false), 3000);
-    }
-  };
+  const [userReaction, setUserReaction] = useState<'need' | 'curious' | 'rethink' | null>(null);
 
   useEffect(() => {
-    if (profile) {
-      setPostAnonymously(profile.post_reviews_anonymously ?? false);
+    if (project) {
+      loadProject();
     }
-  }, [profile]);
-
-  const handleSectionToggle = (section: FlowSection) => {
-    if (section === 'try' && !disclaimerAcknowledged) {
-      setShowDisclaimerModal(true);
-      return;
-    }
-    setExpandedSection(section);
-  };
-
-  const handleDisclaimerAccept = () => {
-    setDisclaimerAcknowledged(true);
-    setShowDisclaimerModal(false);
-    setExpandedSection('try');
-  };
+  }, [user, profile]);
 
   const embeddableLink = links.find((link) => link.link_type === 'demo' || link.link_type === 'website');
   const primaryCtaLink = embeddableLink ?? links[0];
@@ -151,7 +84,7 @@ export default function ProjectPage() {
           filter: `project_id=eq.${project.id}`,
         },
         async () => {
-          await loadReviews(project.id);
+          await loadProject();
           await refreshProjectRatings();
         }
       )
@@ -175,7 +108,6 @@ export default function ProjectPage() {
       setProject(projectData);
       loadCreator(projectData.user_id);
       trackPageView(projectData.id);
-      loadReviews(projectData.id);
       loadFeatures(projectData.id);
       loadLinks(projectData.id);
       loadDonationGoals(projectData.id);
@@ -197,6 +129,49 @@ export default function ProjectPage() {
     if (data) setCreator(data);
   };
 
+  
+  const loadFeatures = async (projectId: string) => {
+    const { data } = await supabase
+    .from('features')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('upvotes', { ascending: false });
+    
+    if (data) setFeatures(data);
+  };
+  
+  const loadLinks = async (projectId: string) => {
+    const { data } = await supabase.from('project_links').select('*').eq('project_id', projectId);
+    
+    if (data) setLinks(data);
+  };
+  
+  const loadDonationGoals = async (projectId: string) => {
+    const { data } = await supabase
+    .from('donation_goals')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('goal_type', 'project');
+    
+    if (data) setDonationGoals(data);
+  };
+  
+  const loadIdea = async (projectId: string) => {
+    setIdeaLoading(true);
+    const { data, error } = await supabase
+    .from('project_ideas')
+    .select('*')
+    .eq('project_id', projectId)
+    .maybeSingle();
+    
+    if (!error && data) {
+      setIdea(data);
+    } else {
+      setIdea(null);
+    }
+    setIdeaLoading(false);
+  };
+  
   const trackPageView = async (projectId: string) => {
     await supabase.from('project_analytics').insert([
       {
@@ -206,58 +181,6 @@ export default function ProjectPage() {
         visit_date: new Date().toISOString().split('T')[0],
       },
     ]);
-  };
-
-  const loadReviews = async (projectId: string) => {
-    const { data } = await supabase
-      .from('reviews')
-      .select('*, profile:profiles(id, display_name, username, avatar_url)')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: false });
-
-    if (data) setReviews(data);
-  };
-
-  const loadFeatures = async (projectId: string) => {
-    const { data } = await supabase
-      .from('features')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('upvotes', { ascending: false });
-
-    if (data) setFeatures(data);
-  };
-
-  const loadLinks = async (projectId: string) => {
-    const { data } = await supabase.from('project_links').select('*').eq('project_id', projectId);
-
-    if (data) setLinks(data);
-  };
-
-  const loadDonationGoals = async (projectId: string) => {
-    const { data } = await supabase
-      .from('donation_goals')
-      .select('*')
-      .eq('project_id', projectId)
-      .eq('goal_type', 'project');
-
-    if (data) setDonationGoals(data);
-  };
-
-  const loadIdea = async (projectId: string) => {
-    setIdeaLoading(true);
-    const { data, error } = await supabase
-      .from('project_ideas')
-      .select('*')
-      .eq('project_id', projectId)
-      .maybeSingle();
-
-    if (!error && data) {
-      setIdea(data);
-    } else {
-      setIdea(null);
-    }
-    setIdeaLoading(false);
   };
 
   const refreshProjectRatings = async () => {
@@ -278,122 +201,23 @@ export default function ProjectPage() {
     }
   };
 
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!project || rating === 0) return;
-
-    const reviewData: any = {
-      project_id: project.id,
-      rating,
-      title: reviewTitle,
-      review_text: reviewText,
-    };
-
-    if (user && profile) {
-      reviewData.created_by_auth_uid = user.id;
-
-      if (!postAnonymously) {
-        reviewData.user_id = profile.id;
-        reviewData.review_identity_public = profile.review_identity_public ?? true;
-      } else {
-        reviewData.user_id = null;
-        reviewData.reviewer_name = null;
-        reviewData.reviewer_email = null;
-      }
-    } else {
-      reviewData.reviewer_name = reviewerName || null;
-      reviewData.reviewer_email = reviewerEmail || null;
-      reviewData.user_id = null;
-      reviewData.created_by_auth_uid = null;
-    }
-
-    const { error } = await supabase.from('reviews').insert([reviewData]);
-
-    if (!error) {
-      setSubmitSuccess('Review submitted successfully!');
-      setRating(0);
-      setReviewTitle('');
-      setReviewText('');
-      setReviewerName('');
-      setReviewerEmail('');
-      setPostAnonymously(profile?.post_reviews_anonymously ?? false);
-      await loadReviews(project.id);
-      await refreshProjectRatings();
-      setTimeout(() => setSubmitSuccess(''), 3000);
-    }
-  };
-
-  const handleStartEdit = (review: Review) => {
-    setEditingReviewId(review.id);
-    setEditRating(review.rating);
-    setEditTitle(review.title);
-    setEditText(review.review_text);
-    setEditAnonymously(!review.user_id);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingReviewId(null);
-    setEditRating(0);
-    setEditTitle('');
-    setEditText('');
-    setEditAnonymously(false);
-  };
-
-  const handleSaveEdit = async (review: Review) => {
-    if (!project || editRating === 0) return;
-
-    const oldUserId = review.user_id;
-    const updateData: any = {
-      rating: editRating,
-      title: editTitle,
-      review_text: editText,
-      last_edited_at: new Date().toISOString(),
-    };
-
-    if (user && profile && !editAnonymously) {
-      updateData.user_id = profile.id;
-      updateData.review_identity_public = profile.review_identity_public ?? true;
-    } else {
-      updateData.user_id = null;
-      updateData.review_identity_public = false;
-    }
-
-    const { error } = await supabase
-      .from('reviews')
-      .update(updateData)
-      .eq('id', review.id);
-
-    if (!error) {
-      await supabase.rpc('recalculate_review_xp_on_edit', {
-        p_review_id: review.id,
-        p_old_user_id: oldUserId,
-        p_new_user_id: updateData.user_id,
-        p_review_identity_public: updateData.review_identity_public,
-      });
-
-      setEditingReviewId(null);
-      await loadReviews(project.id);
-      await refreshProjectRatings();
-    }
-  };
-
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!confirm('Are you sure you want to delete this review?')) return;
-
-    const { error } = await supabase
-      .from('reviews')
-      .delete()
-      .eq('id', reviewId);
-
-    if (!error && project) {
-      await loadReviews(project.id);
-      await refreshProjectRatings();
-    }
-  };
-
   const handleLinkClick = async (linkId: string, url: string) => {
     await supabase.rpc('increment', { row_id: linkId, table_name: 'project_links' });
     window.open(url, '_blank');
+  };
+
+  const handleSectionToggle = (section: FlowSection) => {
+    if (section === 'try' && !disclaimerAcknowledged) {
+      setShowDisclaimerModal(true);
+      return;
+    }
+    setExpandedSection(section);
+  };
+
+  const handleDisclaimerAccept = () => {
+    setDisclaimerAcknowledged(true);
+    setShowDisclaimerModal(false);
+    setExpandedSection('try');
   };
 
   if (loading) {
@@ -421,7 +245,6 @@ export default function ProjectPage() {
     <div className="min-h-screen bg-slate-50">
       <NavBar />
 
-      {/* Third-Party Disclaimer Modal */}
       {showDisclaimerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
@@ -429,38 +252,11 @@ export default function ProjectPage() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowDisclaimerModal(false)}
           />
-          {/* Modal */}
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 animate-in fade-in zoom-in duration-200">
-            <button
-              onClick={() => setShowDisclaimerModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-amber-600" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900">Third-Party Content</h3>
-            </div>
-            <div className="space-y-3 text-slate-600 text-sm mb-6">
-              <p>
-                You are about to access external content hosted by a third party. Please be aware:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-slate-500">
-                <li>ProjectHub does not own, operate, or control linked projects</li>
-                <li>We do not endorse or guarantee any third-party content</li>
-                <li>Visit external sites at your own discretion and risk</li>
-                <li>We are not liable for any damages arising from third-party content</li>
-              </ul>
-            </div>
-            <button
-              onClick={handleDisclaimerAccept}
-              className="w-full py-3 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors"
-            >
-              I Understand, Continue
-            </button>
-          </div>
+          <DemoDisclaimerModal 
+          setShowDisclaimerModal={setShowDisclaimerModal} 
+          setDisclaimerAcknowledged={setDisclaimerAcknowledged} 
+          setExpandedSection={setExpandedSection} 
+          />
         </div>
       )}
       
@@ -626,7 +422,19 @@ export default function ProjectPage() {
               onToggle={() => handleSectionToggle('validate')}
               colorScheme="blue"
             >
-              <IdeaSentiment projectId={project.id} compact={false} showDetails={true} />
+              <div className="space-y-6">
+                {/* Reactions Voting and Feedback */}
+                <div className="space-y-6">
+                  <IdeaReactions 
+                    projectId={project.id}
+                    onReactionChange={(reaction) => setUserReaction(reaction)}
+                  />
+                  <IdeaFeedback 
+                    projectId={project.id}
+                    userReaction={userReaction}
+                  />
+                </div>
+              </div>
             </AccordionSection>
 
             {/* Section 3: Try It Out */}
@@ -695,307 +503,13 @@ export default function ProjectPage() {
             >
               <div className="space-y-8">
                 {/* Review Form */}
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">Leave a Review</h3>
-                  {submitSuccess && (
-                    <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-                      {submitSuccess}
-                    </div>
-                  )}
-                  <form onSubmit={handleSubmitReview} className="space-y-4">
-                    {user && profile ? (
-                      <div className="space-y-3">
-                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="flex items-center space-x-2 text-blue-800">
-                            <User className="w-4 h-4" />
-                            <span className="text-sm font-medium">
-                              {postAnonymously ? 'Posting anonymously' : `Posting as ${profile.display_name}`}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="relative flex items-start space-x-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                          <input
-                            type="checkbox"
-                            id="postAnonymously"
-                            checked={postAnonymously}
-                            onChange={(e) => handleAnonymousToggle(e.target.checked)}
-                            className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
-                          />
-                          <div className="flex-1">
-                            <label htmlFor="postAnonymously" className="text-sm font-medium text-slate-900 block cursor-pointer">
-                              Post anonymously
-                            </label>
-                            <p className="text-xs text-slate-600 mt-0.5">
-                              {postAnonymously
-                                ? 'Your name will not appear on this review (no XP earned)'
-                                : profile.review_identity_public
-                                ? 'Your name will appear publicly (+2 XP bonus!)'
-                                : 'Your name will appear as "Anonymous Reviewer"'}
-                            </p>
-                          </div>
-                          <XPIndicator show={showXPIndicator} amount={xpAmount} />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                        <p className="text-sm text-slate-600">
-                          Posting anonymously.{' '}
-                          <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-                            Sign in
-                          </Link>{' '}
-                          to claim credit and earn XP.
-                        </p>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Your Rating</label>
-                      <div className="flex space-x-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setRating(star)}
-                            onMouseEnter={() => setHoverRating(star)}
-                            onMouseLeave={() => setHoverRating(0)}
-                            className="focus:outline-none"
-                          >
-                            <Star
-                              className={`w-8 h-8 transition-colors ${
-                                star <= (hoverRating || rating)
-                                  ? 'text-yellow-400 fill-current'
-                                  : 'text-slate-300'
-                              }`}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {!user && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Name (Optional)
-                          </label>
-                          <input
-                            type="text"
-                            value={reviewerName}
-                            onChange={(e) => setReviewerName(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            placeholder="John Doe"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Email (Optional)
-                          </label>
-                          <input
-                            type="email"
-                            value={reviewerEmail}
-                            onChange={(e) => setReviewerEmail(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            placeholder="you@example.com"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Review Title
-                      </label>
-                      <input
-                        type="text"
-                        value={reviewTitle}
-                        onChange={(e) => setReviewTitle(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="Sum up your experience"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Your Review
-                      </label>
-                      <textarea
-                        value={reviewText}
-                        onChange={(e) => setReviewText(e.target.value)}
-                        rows={4}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                        placeholder="Share your thoughts about this project..."
-                        required
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={rating === 0}
-                      className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Submit Review
-                    </button>
-                  </form>
-                </div>
-
+                <ReviewForm 
+                  projectId={project.id}
+                  projectSlug={project.slug}
+                  onReviewSubmitted={refreshProjectRatings}
+                />
                 {/* Reviews List */}
-                <div className="border-t border-slate-200 pt-8">
-                  <h3 className="text-xl font-bold text-slate-900 mb-6">Reviews ({reviews.length})</h3>
-                  <div className="space-y-6">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="border-b border-slate-200 pb-6 last:border-0">
-                        {editingReviewId === review.id ? (
-                          <div className="space-y-4 bg-slate-50 p-4 rounded-lg">
-                            <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-2">Rating</label>
-                              <div className="flex space-x-2">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <button
-                                    key={star}
-                                    type="button"
-                                    onClick={() => setEditRating(star)}
-                                    className="focus:outline-none"
-                                  >
-                                    <Star
-                                      className={`w-6 h-6 transition-colors ${
-                                        star <= editRating ? 'text-yellow-400 fill-current' : 'text-slate-300'
-                                      }`}
-                                    />
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-2">Title</label>
-                              <input
-                                type="text"
-                                value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                                required
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-2">Review</label>
-                              <textarea
-                                value={editText}
-                                onChange={(e) => setEditText(e.target.value)}
-                                rows={4}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                                required
-                              />
-                            </div>
-
-                            {user && profile && (
-                              <div className="relative flex items-start space-x-3 p-3 bg-white border border-slate-200 rounded-lg">
-                                <input
-                                  type="checkbox"
-                                  id="editAnonymously"
-                                  checked={editAnonymously}
-                                  onChange={(e) => handleEditAnonymousToggle(e.target.checked, review)}
-                                  className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
-                                />
-                                <div className="flex-1">
-                                  <label htmlFor="editAnonymously" className="text-sm font-medium text-slate-900 block cursor-pointer">
-                                    Post anonymously
-                                  </label>
-                                  <p className="text-xs text-slate-600 mt-0.5">
-                                    {editAnonymously
-                                      ? 'Your name will not appear on this review (no XP)'
-                                      : profile.review_identity_public
-                                      ? 'Your name will appear publicly (+2 XP)'
-                                      : 'Your name will appear as "Anonymous Reviewer"'}
-                                  </p>
-                                </div>
-                                <XPIndicator show={editShowXPIndicator} amount={editXpAmount} />
-                              </div>
-                            )}
-
-                            <div className="flex items-center space-x-3">
-                              <button
-                                onClick={() => handleSaveEdit(review)}
-                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                              >
-                                <Save className="w-4 h-4" />
-                                <span>Save</span>
-                              </button>
-                              <button
-                                onClick={handleCancelEdit}
-                                className="flex items-center space-x-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
-                              >
-                                <Ban className="w-4 h-4" />
-                                <span>Cancel</span>
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <div className="flex items-center space-x-1 mb-1">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < review.rating ? 'text-yellow-400 fill-current' : 'text-slate-300'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                                <h4 className="font-bold text-slate-900">{review.title}</h4>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-slate-500">
-                                  {format(new Date(review.created_at), 'MMM d, yyyy')}
-                                  {review.last_edited_at && (
-                                    <span className="ml-2 text-xs text-slate-400">(edited)</span>
-                                  )}
-                                </span>
-                                {canEditReview(review) && (
-                                  <div className="flex items-center space-x-1">
-                                    <button
-                                      onClick={() => handleStartEdit(review)}
-                                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                      title="Edit review"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteReview(review.id)}
-                                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                      title="Delete review"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <p className="text-slate-700 mb-2">{review.review_text}</p>
-                            <div className="text-sm text-slate-500">
-                              {review.profile && review.review_identity_public ? (
-                                <Link
-                                  to={`/creator/${review.profile.username}`}
-                                  className="text-blue-600 hover:text-blue-700 font-medium"
-                                >
-                                  {review.profile.display_name}
-                                </Link>
-                              ) : (
-                                <span>{review.reviewer_name || 'Anonymous Reviewer'}</span>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                    {reviews.length === 0 && (
-                      <p className="text-center text-slate-500 py-8">No reviews yet. Be the first!</p>
-                    )}
-                  </div>
-                </div>
+                <ReviewsList projectId={project.id} />
               </div>
             </AccordionSection>
           </div>

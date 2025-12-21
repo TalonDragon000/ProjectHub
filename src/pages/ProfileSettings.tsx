@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Upload, Save, X, Grid3x3, ArrowLeft, Check, Loader, DollarSign, Shield, Info } from 'lucide-react';
+import { Upload, Save, X, Grid3x3, ArrowLeft, Check, Loader, DollarSign, Shield, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { PaymentProvider } from '../types';
@@ -10,25 +10,24 @@ export default function ProfileSettings() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [displayName, setDisplayName] = useState('');
-  const [username, setUsername] = useState('');
-  const [bio, setBio] = useState('');
-  const [emailPublic, setEmailPublic] = useState(false);
-  const [openToBetaTest, setOpenToBetaTest] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [displayName, setDisplayName] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
+  const [bio, setBio] = useState<string>('');
+  const [allowMessagesFromUsers, setAllowMessagesFromUsers] = useState<boolean>(false);
+  const [openToBetaTest, setOpenToBetaTest] = useState<boolean>(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
 
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-  const [usernameChecking, setUsernameChecking] = useState(false);
-  const [paymentProvider, setPaymentProvider] = useState<PaymentProvider | ''>('');
-  const [paymentUsername, setPaymentUsername] = useState('');
-  const [reviewIdentityPublic, setReviewIdentityPublic] = useState(true);
-  const [postReviewsAnonymously, setPostReviewsAnonymously] = useState(false);
-  const [postFeedbackAnonymously, setPostFeedbackAnonymously] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [usernameChecking, setUsernameChecking] = useState<boolean>(false);
+  const [paymentProvider, setPaymentProvider] = useState<PaymentProvider | null>(null);
+  const [paymentUsername, setPaymentUsername] = useState<string>('');
+  const [postReviewsAnonymously, setPostReviewsAnonymously] = useState<boolean>(false);
+  const [postFeedbackAnonymously, setPostFeedbackAnonymously] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
 
   useEffect(() => {
     if (!user) {
@@ -40,15 +39,14 @@ export default function ProfileSettings() {
       setDisplayName(profile.display_name);
       setUsername(profile.username);
       setBio(profile.bio || '');
-      setEmailPublic(profile.email_public);
+      setAllowMessagesFromUsers(profile.allow_messages_from_users || true);
       setOpenToBetaTest(profile.open_to_beta_test);
       setAvatarUrl(profile.avatar_url || '');
       setAvatarPreview(profile.avatar_url || '');
-      setPaymentProvider(profile.payment_provider || '');
+      setPaymentProvider(profile.payment_provider || null);
       setPaymentUsername(profile.payment_username || '');
-      setReviewIdentityPublic(profile.review_identity_public ?? true);
-      setPostReviewsAnonymously(profile.post_reviews_anonymously ?? false);
-      setPostFeedbackAnonymously(profile.post_feedback_anonymously ?? false);
+      setPostReviewsAnonymously(profile.post_reviews_anonymously || false);
+      setPostFeedbackAnonymously(profile.post_feedback_anonymously || false);
     }
   }, [user, profile, navigate]);
 
@@ -108,12 +106,17 @@ export default function ProfileSettings() {
       await supabase.storage.from('avatars').remove([oldPath]);
     }
 
-    const { error: uploadError, data } = await supabase.storage
+    const { error: uploadError, data: uploadData } = await supabase.storage
       .from('avatars')
-      .upload(fileName, avatarFile);
+      .upload(fileName, avatarFile, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: avatarFile.type,
+      });
 
-    if (uploadError) {
-      throw new Error('Failed to upload avatar');
+    if (uploadError || !uploadData) {
+      console.error('Failed to upload avatar:', uploadError);
+      throw new Error(`Failed to upload avatar: ${uploadError?.message || 'Unknown error'}`);
     }
 
     const { data: urlData } = supabase.storage
@@ -142,9 +145,9 @@ export default function ProfileSettings() {
         throw new Error('Username is not available');
       }
 
-      const usernameRegex = /^[a-z0-9_-]{3,30}$/;
+      const usernameRegex = new RegExp(`^[a-z0-9_-]{3,30}$`);
       if (!usernameRegex.test(username)) {
-        throw new Error('Username must be 3-30 characters and contain only lowercase letters, numbers, hyphens, and underscores');
+        throw new Error(`Username must be 3-30 characters and contain only lowercase letters, numbers, hyphens, and underscores`);
       }
 
       if (bio.length > 500) {
@@ -159,21 +162,22 @@ export default function ProfileSettings() {
         }
       }
 
+      const updatePayload = {
+        display_name: displayName.trim(),
+        username: username.trim().toLowerCase(),
+        bio: bio.trim() || null,
+        allow_messages_from_users: allowMessagesFromUsers,
+        open_to_beta_test: openToBetaTest,
+        avatar_url: newAvatarUrl || null,
+        payment_provider: paymentProvider || null,
+        payment_username: paymentUsername.trim() || null,
+        post_reviews_anonymously: postReviewsAnonymously,
+        post_feedback_anonymously: postFeedbackAnonymously,
+      };
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          display_name: displayName.trim(),
-          username: username.trim().toLowerCase(),
-          bio: bio.trim() || null,
-          email_public: emailPublic,
-          open_to_beta_test: openToBetaTest,
-          avatar_url: newAvatarUrl || null,
-          payment_provider: paymentProvider || null,
-          payment_username: paymentUsername.trim() || null,
-          review_identity_public: reviewIdentityPublic,
-          post_reviews_anonymously: postReviewsAnonymously,
-          post_feedback_anonymously: postFeedbackAnonymously,
-        })
+        .update(updatePayload)
         .eq('id', profile?.id);
 
       if (updateError) throw updateError;
@@ -182,9 +186,6 @@ export default function ProfileSettings() {
       setAvatarFile(null);
       setAvatarUrl(newAvatarUrl);
 
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
     } catch (err: any) {
       setError(err.message || 'Failed to update profile');
     } finally {
@@ -324,7 +325,7 @@ export default function ProfileSettings() {
                         className="w-full pl-8 pr-12 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                         placeholder="johndoe"
                         required
-                        pattern="[a-z0-9_-]{3,30}"
+                        pattern="[a-z0-9_\-]{3,30}"
                         maxLength={30}
                       />
                       {usernameChecking && (
@@ -367,14 +368,17 @@ export default function ProfileSettings() {
                   <div className="flex items-center space-x-3">
                     <input
                       type="checkbox"
-                      id="emailPublic"
-                      checked={emailPublic}
-                      onChange={(e) => setEmailPublic(e.target.checked)}
+                      id="allowMessagesFromUsers"
+                      checked={allowMessagesFromUsers}
+                      onChange={(e) => setAllowMessagesFromUsers(e.target.checked)}
                       className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
                     />
-                    <label htmlFor="emailPublic" className="text-sm font-medium text-slate-700">
-                      Make my email visible on my public profile
+                    <label htmlFor="allowMessagesFromUsers" className="text-sm font-medium text-slate-700">
+                      Allow messages from users
                     </label>
+                    <p className="text-sm text-slate-500 mt-1">
+                      When enabled, users will be able to send you messages.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -403,77 +407,64 @@ export default function ProfileSettings() {
                   Control how your identity appears when posting reviews and feedback.
                 </p>
 
-                <div className="space-y-4">
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <input
-                        type="checkbox"
-                        id="reviewIdentityPublic"
-                        checked={reviewIdentityPublic}
-                        onChange={(e) => setReviewIdentityPublic(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
-                      />
-                      <div className="flex-1">
-                        <label htmlFor="reviewIdentityPublic" className="text-sm font-medium text-slate-900 block mb-1">
-                          Show my name on reviews I post <span className="text-green-600 font-semibold">(+2 XP per review)</span>
-                        </label>
-                        <p className="text-sm text-slate-600">
-                          When enabled, your username will appear publicly on reviews. This transparency earns you bonus XP! If disabled, reviews show "Anonymous Reviewer" and earn no XP bonus.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <input
-                        type="checkbox"
-                        id="postReviewsAnonymously"
-                        checked={postReviewsAnonymously}
-                        onChange={(e) => setPostReviewsAnonymously(e.target.checked)}
-                        className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
-                      />
-                      <div className="flex-1">
-                        <label htmlFor="postReviewsAnonymously" className="text-sm font-medium text-slate-900 block mb-1">
-                          Post reviews anonymously by default
-                        </label>
-                        <p className="text-sm text-slate-600">
-                          When enabled, the "Post anonymously" checkbox will be checked by default when writing reviews. You can still toggle it per review.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                <div className="privacy-checkboxes space-y-4">
+                  {/* Checkbox 1: Feedback */}
+                  <div className="feedback-checkbox p-4 bg-slate-50 border border-slate-200 rounded-lg">
                     <div className="flex items-start space-x-3">
                       <input
                         type="checkbox"
                         id="postFeedbackAnonymously"
                         checked={postFeedbackAnonymously}
                         onChange={(e) => setPostFeedbackAnonymously(e.target.checked)}
-                        className="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 mt-0.5"
+                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
                       />
                       <div className="flex-1">
                         <label htmlFor="postFeedbackAnonymously" className="text-sm font-medium text-slate-900 block mb-1">
-                          Post idea feedback anonymously by default
+                          Post feedback anonymously by default
                         </label>
                         <p className="text-sm text-slate-600">
-                          When enabled, the "Post anonymously" checkbox will be checked by default when submitting idea feedback. You can still toggle it per submission.
+                          {postFeedbackAnonymously 
+                            ? 'Your feedback will show as "Anonymous" (base XP only)'
+                            : 'Your feedback will show your name (+2 XP bonus!)'}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2">
-                    <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-amber-800">
-                      <p className="font-medium mb-1">About anonymous posts:</p>
-                      <ul className="list-disc list-inside space-y-1 text-amber-700">
-                        <li>You can edit or delete your anonymous posts until you clear your browser data</li>
-                        <li>Anonymous posts don't earn XP rewards</li>
-                        <li>Logged-in users can always claim credit by unchecking "Post anonymously"</li>
-                      </ul>
+                  {/* Checkbox 2: Reviews */}
+                  <div className="reviews-checkbox p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="postReviewsAnonymously"
+                        checked={postReviewsAnonymously}
+                        onChange={(e) => setPostReviewsAnonymously(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500 mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="postReviewsAnonymously" className="text-sm font-medium text-slate-900 block mb-1">
+                          Post reviews anonymously by default
+                        </label>
+                        <p className="text-sm text-slate-600">
+                          {postReviewsAnonymously 
+                            ? 'Your reviews will show as "Anonymous" (base XP only)'
+                            : 'Your reviews will show your name (+2 XP bonus!)'}
+                        </p>
+                      </div>
                     </div>
+                  </div>
+
+                </div>
+
+                <div className="anonymous-posts-info p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2 mt-4">
+                  <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-800">
+                    <p className="font-medium mb-1">About anonymous posts:</p>
+                    <ul className="list-disc list-inside space-y-1 text-amber-700">
+                      <li>You can edit or delete your anonymous posts until you clear your browser data</li>
+                      <li>Anonymous posts don't earn bonus XP rewards</li>
+                      <li>You can override the anonymous setting on a per-post basis</li>
+                    </ul>
                   </div>
                 </div>
               </div>
@@ -514,9 +505,9 @@ export default function ProfileSettings() {
                       Payment Provider
                     </label>
                     <select
-                      value={paymentProvider}
+                      value={paymentProvider || ''}
                       onChange={(e) => {
-                        setPaymentProvider(e.target.value as PaymentProvider | '');
+                        setPaymentProvider(e.target.value as PaymentProvider | null);
                         if (!e.target.value) {
                           setPaymentUsername('');
                         }
@@ -554,7 +545,7 @@ export default function ProfileSettings() {
                               paymentProvider === 'ko-fi' ? 'yourusername' :
                               'your-payment-link-id'
                             }
-                            pattern="[a-zA-Z0-9_-]{3,100}"
+                            pattern="[a-zA-Z0-9_\-]{3,100}"
                             maxLength={100}
                           />
                         </div>
