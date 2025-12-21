@@ -29,6 +29,7 @@ export default function ProfileSettings() {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
 
+ 
   useEffect(() => {
     if (!user) {
       navigate('/login');
@@ -58,6 +59,20 @@ export default function ProfileSettings() {
     }
   }, [username]);
 
+  useEffect(() => {
+  if (success) {
+    const timer = setTimeout(() => setSuccess(''), 3000);
+    return () => clearTimeout(timer);
+  }
+}, [success]);
+
+  useEffect(() => {
+  if (error) {
+    const timer = setTimeout(() => setError(''), 5000);
+    return () => clearTimeout(timer);
+  }
+}, [error]);
+  
   const checkUsernameAvailability = async () => {
     const usernameRegex = /^[a-z0-9_-]{3,30}$/;
     if (!usernameRegex.test(username)) {
@@ -237,20 +252,6 @@ export default function ProfileSettings() {
           <div className="p-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Profile Settings</h1>
             <p className="text-slate-600 mb-8">Update your public profile information</p>
-
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-start">
-                <X className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-start">
-                <Check className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-                <span>{success}</span>
-              </div>
-            )}
 
             <form onSubmit={handleSave} className="space-y-8">
               <div>
@@ -604,6 +605,47 @@ export default function ProfileSettings() {
           </div>
         </div>
       </div>
+
+      {/* Toast Notifications - Fixed Position Bottom-Right */}
+      {success && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center space-x-3 min-w-[320px]">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <Check className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">Success!</p>
+              <p className="text-sm text-green-50">{success}</p>
+            </div>
+            <button 
+              onClick={() => setSuccess('')}
+              className="text-green-100 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-red-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center space-x-3 min-w-[320px]">
+            <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <X className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">Error</p>
+              <p className="text-sm text-red-50">{error}</p>
+            </div>
+            <button 
+              onClick={() => setError('')}
+              className="text-red-100 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

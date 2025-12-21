@@ -93,10 +93,6 @@ export default function IdeaFeedback({ projectId, userReaction, compact = false 
         feedback_identity_public: !postAnonymously,
       };
 
-      if (postAnonymously) {
-        feedbackData.feedback_identity_public = !postAnonymously;
-      }
-
       const { error } = await supabase.from('quick_feedback').insert(feedbackData);
 
       if (!error) {
