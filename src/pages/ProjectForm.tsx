@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import NavBar from '../components/NavBar';
 
-const HERO_IMAGE_BUCKET = 'project-hero-images';
+const HERO_IMAGE_BUCKET = 'hero_image';
 
 export default function ProjectForm() {
   const { id } = useParams<{ id: string }>();
@@ -144,7 +144,7 @@ export default function ProjectForm() {
     try {
       const fileExt = file.name.split('.').pop() || 'png';
       const fileName = `${profile?.id || 'anonymous'}-${Date.now()}.${fileExt}`;
-      const filePath = `hero-images/${fileName}`;
+      const filePath = `hero_image/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from(HERO_IMAGE_BUCKET)

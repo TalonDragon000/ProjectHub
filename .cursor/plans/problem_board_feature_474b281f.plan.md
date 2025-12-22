@@ -1,0 +1,345 @@
+---
+name: Problem Board Feature
+overview: Repurpose the project_ideas table to support standalone problem posting, enabling a "bounty board" where users can post problems independently and creators can claim them to build solutions.
+todos:
+  - id: db-migration
+    content: Create migration to repurpose project_ideas to problems table
+    status: pending
+  - id: update-types
+    content: Update TypeScript types and interfaces for Problem entity
+    status: pending
+    dependencies:
+      - db-migration
+  - id: problem-card
+    content: Create ProblemCard component for displaying problems
+    status: pending
+    dependencies:
+      - update-types
+  - id: browse-problems
+    content: Create BrowseProblems page with filtering and sorting
+    status: pending
+    dependencies:
+      - problem-card
+  - id: problem-form
+    content: Create ProblemForm for posting standalone problems
+    status: pending
+    dependencies:
+      - update-types
+  - id: update-project-form
+    content: Add problem search and claiming to ProjectForm Step 1
+    status: pending
+    dependencies:
+      - update-types
+  - id: problem-detail
+    content: Create ProblemDetailPage with full details and claiming CTA
+    status: pending
+    dependencies:
+      - problem-card
+  - id: navigation-updates
+    content: Update AuthContext, App routing, NavBar, and Dashboard
+    status: pending
+    dependencies:
+      - browse-problems
+      - problem-form
+  - id: testing
+    content: Run full testing checklist and fix issues
+    status: pending
+    dependencies:
+      - navigation-updates
+      - problem-detail
+      - update-project-form
+---
+
+# Problem Board Feature Implementation
+
+## Overview
+
+Transform `project_ideas` into a flexible `problems` table that supports both standalone problem posting and project-linked ideas. This enables a lightweight "bounty board" where users can validate problems before building, and creators can discover validated problems to solve.
+
+## Database Changes
+
+### Migration: Repurpose project_ideas → problems
+
+Create new migration file: `supabase/migrations/[timestamp]_add_problem_board_system.sql`
+
+**Key changes:**
+
+- Rename `project_ideas` to `problems`
+- Make `project_id` nullable (allow standalone problems)
+- Add `problem_type` enum: 'standalone' | 'project_linked'
+- Add `title` field (short problem statement)
+- Add `target_audience` field (who experiences this)
+- Add `is_published` boolean (control visibility)
+- Add `claimed_by_project_id` reference (track claiming)
+- Add `user_id` reference (problem poster)
+- Remove UNIQUE constraint on `project_id`
+```sql
+-- Rename table
+ALTER TABLE project_ideas RENAME TO problems;
+
+-- Modify existing columns
+ALTER TABLE problems 
+  ALTER COLUMN project_id DROP NOT NULL,
+  DROP CONSTRAINT IF EXISTS project_ideas_project_id_key;
+
+-- Add new columns
+ALTER TABLE problems 
+  ADD COLUMN IF NOT EXISTS title text,
+  ADD COLUMN IF NOT EXISTS target_audience text,
+  ADD COLUMN IF NOT EXISTS problem_type text DEFAULT 'project_linked' 
+    CHECK (problem_type IN ('standalone', 'project_linked')),
+  ADD COLUMN IF NOT EXISTS is_published boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS claimed_by_project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES profiles(id) ON DELETE SET NULL;
+
+-- Backfill user_id from projects
+UPDATE problems p
+SET user_id = proj.user_id
+FROM projects proj
+WHERE p.project_id = proj.id AND p.user_id IS NULL;
+
+-- Backfill claimed status
+UPDATE problems 
+SET claimed_by_project_id = project_id 
+WHERE project_id IS NOT NULL;
+
+-- Update RLS policies for standalone problems
+CREATE POLICY "Published problems are viewable by all"
+  ON problems FOR SELECT TO public
+  USING (is_published = true);
+
+CREATE POLICY "Users can view their own problems"
+  ON problems FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Users can create problems"
+  ON problems FOR INSERT TO authenticated
+  WITH CHECK (user_id = auth.uid());
+```
+
+
+**Update all trigger functions and indexes** to reference `problems` instead of `project_ideas`.
+
+## TypeScript Type Updates
+
+Update [`src/types/index.ts`](src/types/index.ts):
+
+```typescript
+// Rename ProjectIdea to Problem
+export interface Problem {
+  id: string;
+  user_id: string | null;
+  project_id: string | null;
+  title: string;
+  problem_area: string; // Detailed description
+  target_audience: string;
+  keywords: string[];
+  problem_type: 'standalone' | 'project_linked';
+  is_published: boolean;
+  claimed_by_project_id: string | null;
+  need_count: number;
+  curious_count: number;
+  rethink_count: number;
+  collaboration_open: boolean;
+  created_at: string;
+  updated_at: string;
+  profile?: Profile; // Poster profile
+  project?: Project; // Linked project if claimed
+}
+
+// Keep ProjectIdea as alias for backward compatibility
+export type ProjectIdea = Problem;
+```
+
+## Frontend Components
+
+### 1. New Page: BrowseProblems.tsx
+
+Create [`src/pages/BrowseProblems.tsx`](src/pages/BrowseProblems.tsx) - Display standalone problems in card grid:
+
+```typescript
+// Features:
+// - Filter by category, keywords
+// - Sort by need_count, created_at
+// - Show validation metrics (need/curious/rethink counts)
+// - "I'll Build This" button to claim problem
+// - "Publish Problem" button in header
+```
+
+### 2. New Page: ProblemForm.tsx
+
+Create [`src/pages/ProblemForm.tsx`](src/pages/ProblemForm.tsx) - 3-step problem creation:
+
+**Step 1: Problem Statement**
+
+- Title (required)
+- Problem area / detailed description (required)
+- Target audience (required)
+- Category (required)
+
+**Step 2: Market Context**
+
+- Keywords/tags
+- Existing solutions (textarea)
+- Why existing solutions fail
+
+**Step 3: Publish & Validate**
+
+- Preview
+- Collaboration open checkbox
+- Publish button
+
+### 3. Component: ProblemCard.tsx
+
+Create [`src/components/ProblemCard.tsx`](src/components/ProblemCard.tsx) - Display problem in card format:
+
+```typescript
+// Shows:
+// - Title, problem_area (truncated)
+// - Target audience badge
+// - Validation metrics (X need this, Y curious, Z rethink)
+// - Keywords as tags
+// - "Claimed" badge if claimed_by_project_id exists
+// - "Build Solution" button (if not claimed)
+// - Link to problem detail page
+```
+
+### 4. Update: ProjectForm.tsx
+
+Modify [`src/pages/ProjectForm.tsx`](src/pages/ProjectForm.tsx) Step 1 to include problem selection:
+
+```typescript
+// Add before problem_area field:
+// - Search bar: "Search existing problems or create new"
+// - Show matching problems as user types
+// - "Claim this problem" button for each result
+// - If problem claimed: pre-fill fields from problem data
+// - If no match: continue with creating new problem
+
+// Add "Publish as standalone problem" option at bottom of Step 1
+```
+
+## Navigation & Routing
+
+### Update AuthContext
+
+Modify [`src/contexts/AuthContext.tsx`](src/contexts/AuthContext.tsx):
+
+```typescript
+// Change activeView type
+activeView: 'user' | 'creator' | 'problems' | 'messages';
+
+// Add problems view to localStorage handling
+```
+
+### Update App Routes
+
+Modify [`src/App.tsx`](src/App.tsx):
+
+```typescript
+// Add new routes:
+<Route path="/problems" element={<BrowseProblems />} />
+<Route path="/problems/new" element={<ProblemForm />} />
+<Route path="/problems/:id" element={<ProblemDetailPage />} />
+<Route path="/problems/:id/edit" element={<ProblemForm />} />
+```
+
+### Update Dashboard
+
+Modify [`src/pages/Dashboard.tsx`](src/pages/Dashboard.tsx):
+
+```typescript
+// Add "Problems" tab to navigation
+// When activeView === 'problems':
+//   - Show user's posted problems
+//   - Show "Post Problem" button
+//   - Show stats: problems posted, validation metrics
+//   - Show claimed problems (if any)
+```
+
+### Update NavBar
+
+Modify [`src/components/NavBar.tsx`](src/components/NavBar.tsx):
+
+```typescript
+// Add "Problems" link to main navigation
+// Between "Projects" and "Dashboard"
+```
+
+## Problem Detail Page
+
+Create [`src/pages/ProblemDetailPage.tsx`](src/pages/ProblemDetailPage.tsx):
+
+```typescript
+// Display:
+// - Full problem details
+// - Poster profile (if not anonymous)
+// - Validation section (IdeaSentiment component reused)
+// - Comments/feedback section
+// - "Build Solution" prominent CTA
+// - If claimed: link to project solving it
+```
+
+## Data Flow Diagram
+
+```mermaid
+flowchart TD
+    User[User]
+    ProblemForm[Problem Form]
+    ProblemsTable[(problems table)]
+    BrowseProblems[Browse Problems]
+    ProjectForm[Project Form]
+    
+    User -->|Posts problem| ProblemForm
+    ProblemForm -->|problem_type: standalone<br/>is_published: true| ProblemsTable
+    
+    ProblemsTable -->|Query published problems| BrowseProblems
+    User -->|Views problems| BrowseProblems
+    
+    BrowseProblems -->|Clicks Build Solution| ProjectForm
+    ProjectForm -->|Claims problem<br/>Sets claimed_by_project_id| ProblemsTable
+    
+    User -->|Creates project first| ProjectForm
+    ProjectForm -->|Searches problems| ProblemsTable
+    ProjectForm -->|Creates new problem<br/>problem_type: project_linked| ProblemsTable
+```
+
+## Testing Checklist
+
+After implementation:
+
+1. Post standalone problem → appears in Browse Problems
+2. Search problems in ProjectForm → matching results shown
+3. Claim problem → pre-fills ProjectForm fields
+4. Claimed problem → shows "Claimed" badge, hides "Build" button
+5. Create project with new problem → problem linked correctly
+6. Validation reactions → counts update on problem cards
+7. Dashboard problems tab → shows user's posted problems
+8. RLS policies → users can only edit their own problems
+
+## Rollout Strategy
+
+**Phase 1** (Week 1): Database + Types
+
+- Migration script
+- Update all references to project_ideas
+- Test backward compatibility
+
+**Phase 2** (Week 2): Core UI
+
+- BrowseProblems page
+- ProblemForm page
+- ProblemCard component
+- Navigation updates
+
+**Phase 3** (Week 3): Integration
+
+- ProjectForm claiming mechanism
+- Dashboard problems tab
+- Problem detail page
+
+**Phase 4** (Week 4): Polish & Test
+
+- Analytics tracking
+- User testing
+- Bug fixes

@@ -77,7 +77,10 @@ export default function MessagesView() {
 
     const { data, error } = await supabase
       .from('conversations')
-      .select('*, participant_1:profiles!conversations_participant_1_id_fkey(*), participant_2:profiles!conversations_participant_2_id_fkey(*)')
+      .select(`
+        *, 
+        participant_1:profiles!conversations_participant_1_id_fkey(*), participant_2:profiles!conversations_participant_2_id_fkey(*)
+        `)
       .or(`participant_1_id.eq.${profile.id},participant_2_id.eq.${profile.id}`)
       .order('last_message_at', { ascending: false });
 
@@ -210,7 +213,7 @@ export default function MessagesView() {
           <h2 className="text-xl font-bold text-slate-900">Messages</h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div id="conversation" className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-slate-600 mb-2">No conversations yet</p>

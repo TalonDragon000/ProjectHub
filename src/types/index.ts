@@ -1,3 +1,7 @@
+// ===============================
+// PROJECTS
+// ===============================
+
 export interface Project {
   id: string;
   user_id: string;
@@ -15,37 +19,17 @@ export interface Project {
   profile?: Profile;
 }
 
-export interface Review {
+export interface ProjectIdea {
   id: string;
   project_id: string;
-  project_slug: string;
-  user_id: string | null;
-  rating: number;
-  title: string;
-  review_text: string;
-  reviewer_name?: string | null;
-  reviewer_email?: string | null;
-  review_identity_public?: boolean;
-  session_id?: string | null;
-  created_by_auth_uid?: string | null;
-  last_edited_at?: string | null;
+  problem_area: string;
+  keywords: string[];
+  need_count: number;
+  curious_count: number;
+  rethink_count: number;
+  collaboration_open: boolean;
   created_at: string;
-  updated_at?: string;
-  is_verified: boolean;
-  profile?: Profile;
-}
-
-export interface QuickFeedback {
-  id: string;
-  project_id: string;
-  user_id?: string | null;
-  message: string;
-  sentiment?: 'positive' | 'neutral' | 'negative';
-  session_id?: string | null;
-  created_by_auth_uid?: string | null;
-  last_edited_at?: string | null;
-  created_at: string;
-  profile?: Profile;
+  updated_at: string;
 }
 
 export interface Feature {
@@ -120,7 +104,10 @@ export interface ProjectUpdate {
   is_pinned: boolean;
 }
 
-export type PaymentProvider = 'paypal' | 'stripe' | 'ko-fi';
+// ===============================
+// PROFILE
+// ===============================
+
 
 export interface Profile {
   id: string;
@@ -129,13 +116,15 @@ export interface Profile {
   username: string;
   bio?: string;
   avatar_url?: string;
-  email_public: boolean;
+  email?: string | null;
+  allow_messages_from_users: boolean;
   open_to_beta_test: boolean;
   is_creator: boolean;
   is_idea_maker?: boolean;
-  review_identity_public?: boolean;
-  post_reviews_anonymously?: boolean;
-  post_feedback_anonymously?: boolean;
+  review_identity_public?: boolean; // per-project setting
+  feedback_identity_public?: boolean; // per-project setting
+  post_reviews_anonymously?: boolean; // profile setting
+  post_feedback_anonymously?: boolean; // profile setting
   payment_provider?: PaymentProvider | null;
   payment_username?: string | null;
   created_at: string;
@@ -157,6 +146,12 @@ export interface ProfileStats {
 
 export type CreatorProfile = Profile;
 export type CreatorStats = ProfileStats;
+
+export type PaymentProvider = 'paypal' | 'stripe' | 'ko-fi';
+
+// ===============================
+// MESSAGES
+// ===============================
 
 export interface Conversation {
   id: string;
@@ -182,17 +177,26 @@ export interface Message {
   sender?: Profile;
 }
 
-export interface ProjectIdea {
+// ===============================
+// FEEDBACK & REVIEWS
+// ===============================
+
+export interface Review {
   id: string;
   project_id: string;
-  problem_area: string;
-  keywords: string[];
-  need_count: number;
-  curious_count: number;
-  rethink_count: number;
-  collaboration_open: boolean;
+  project_slug: string;
+  user_id: string | null; // Always set for logged users (for XP)
+  rating: number;
+  title: string;
+  review_text: string;
+  review_identity_public?: boolean; // TRUE = public identity, FALSE = anonymous
+  session_id?: string | null; // for non-logged user star-rating
+  created_by_auth_uid?: string | null; // for logged user edits
+  last_edited_at?: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
+  is_verified: boolean;
+  profile?: Profile;
 }
 
 export interface IdeaReaction {
@@ -202,4 +206,17 @@ export interface IdeaReaction {
   reaction_type: 'need' | 'curious' | 'rethink';
   created_by_auth_uid?: string | null;
   created_at: string;
+}
+
+export interface QuickFeedback {
+  id: string;
+  project_id: string;
+  user_id: string; // for XP
+  message: string;
+  reaction_type: 'need' | 'curious' | 'rethink';
+  feedback_identity_public?: boolean; // TRUE = public identity, FALSE = anonymous
+  created_by_auth_uid?: string | null; // for editing
+  last_edited_at?: string | null;
+  created_at: string;
+  profile?: Profile;
 }
