@@ -66,7 +66,7 @@ export default function Footer() {
         <div className="pt-8 border-t border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-slate-400 text-sm">
-              © 2025 ProjectHub. All rights reserved. <span className="text-slate-500">v0.1.2</span>
+              © 2025 ProjectHub. All rights reserved. <span className="text-slate-500">v0.1.3</span>
             </p>
             <p className="text-slate-400 text-sm">
               Built with <span className="text-red-400">❤️</span> by{' '}
