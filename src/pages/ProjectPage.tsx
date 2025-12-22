@@ -26,16 +26,14 @@ import {
   ProjectIdea,
   QuickFeedback,
 } from '../types';
-import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
-import IdeaReactions from './IdeaReactions';
-import IdeaFeedback from './IdeaFeedback';
-import ReviewForm from './ReviewForm';
-import ReviewsList from './ReviewsList';
-import AccordionSection from './AccordionSection';
-import NavBar from './NavBar';
-import XPIndicator from './XPIndicator';
-import DemoDisclaimerModal from './DemoDisclaimerModal';
+import IdeaReactions from '../components/IdeaReactions';
+import IdeaFeedback from '../components/IdeaFeedback';
+import ReviewForm from '../components/ReviewForm';
+import ReviewsList from '../components/ReviewsList';
+import AccordionSection from '../components/AccordionSection';
+import NavBar from '../components/NavBar';
+import DemoDisclaimerModal from '../components/DemoDisclaimerModal';
 
 type FlowSection = 'discover' | 'validate' | 'try' | 'review';
 
@@ -212,12 +210,6 @@ export default function ProjectPage() {
       return;
     }
     setExpandedSection(section);
-  };
-
-  const handleDisclaimerAccept = () => {
-    setDisclaimerAcknowledged(true);
-    setShowDisclaimerModal(false);
-    setExpandedSection('try');
   };
 
   if (loading) {
@@ -456,7 +448,7 @@ export default function ProjectPage() {
                       src={embeddableLink.url}
                       title={`${project.name} preview`}
                       className="w-full h-full"
-                      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                      sandbox="allow-scripts allow-popups allow-forms"
                     />
                   </div>
                   {/* Fallback link */}

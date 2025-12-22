@@ -7,6 +7,7 @@ import CreatorCard from '../components/CreatorCard';
 import BrowseProjects from '../components/BrowseProjects';
 import SearchBar from '../components/SearchBar';
 import NavBar from '../components/NavBar';
+import Footer from '../components/Footer';
 
 export default function Home() {
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
@@ -204,15 +205,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer id="footer" className="bg-slate-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Grid3x3 className="w-8 h-8" />
-            <span className="text-2xl font-bold">ProjectHub</span>
-          </div>
-          <p className="text-slate-400">Empowering startup builders to ship in public</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
