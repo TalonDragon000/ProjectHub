@@ -1,17 +1,18 @@
 # ProjectHub
 
 **Current Version:** v0.1.2 (December 2025)  
-**Status:** Stable Release | Bug Fixes & Gamification Live
+**Latest Update:** December 21, 2025  
+**Status:** Stable Release | Bug Fixes & Dashboard Restructuring
 
 ---
 
 ## About
 
-**Ship in public. Validate ideas. Build community.**
+**Validate ideas. Build in public. Collaborate with community.**
 
-ProjectHub is a platform for discovering, supporting, and sharing startup projects. It empowers solo creators and indie developers to validate ideas before building, gather feedback during development, and build a community around their work.
+ProjectHub is a platform for discovering, supporting, and sharing startup projects. It empowers solo creators and indie developers to validate ideas before building, gather feedback during development, and foster a collaborative community of colleges.
 
-**Earn XP, climb leaderboards, and get rewarded for participation.**
+**Earn XP for paying it forward. Donate to projects you care about.**
 
 > For detailed development history and technical documentation, see [DEVLOG](./DEVLOG/)
 
@@ -32,6 +33,7 @@ ProjectHub is a platform for discovering, supporting, and sharing startup projec
 - **Roadmap Management** - Share features with upvote/downvote voting
 - **Donation Goals** - Accept support via PayPal, Stripe, or Ko-fi integration
 - **Direct Messaging** - Connect with reviewers and potential collaborators
+- **Modern Dashboard** - Sidebar navigation with dedicated User and Creator views
 
 ### For Users
 
@@ -52,10 +54,11 @@ ProjectHub is a platform for discovering, supporting, and sharing startup projec
 - **XP & Leveling System** - Comprehensive gamification with 7 ways to earn XP
 - **Leaderboard System** - Dynamic rankings with bot detection and admin moderation
 - **Real-Time Updates** - Live notifications for messages, reviews, and XP rewards
-- **Mobile Responsive** - Optimized layouts for all screen sizes
+- **Mobile Responsive** - Optimized layouts with slide-out sidebar navigation for all screen sizes
 - **Third-Party Disclaimers** - Clear warnings for external content
 - **Privacy Controls** - Choose to post anonymously or publicly with flexible editing
 - **Bot Detection** - Automated suspicious activity tracking with admin review system
+- **Persistent Navigation** - Sidebar stays visible across dashboard views with unread message badges
 
 ### XP Rewards System
 
@@ -70,6 +73,7 @@ Earn experience points for community participation:
 - ✍️ **Public Review Bonus:** +2 XP (when reviewer opts into public identity)
 
 **Level Up:** Levels calculated as `sqrt(total_xp / 100) + 1`
+> (XP visibility coming soon.)
 
 ---
 
@@ -96,50 +100,60 @@ Earn experience points for community participation:
 ### Installation
 
 1. **Clone the repository**
-   ```bash
+```
    git clone https://github.com/yourusername/projecthub.git
    cd projecthub
-   ```
-
+```
 2. **Install dependencies**
-   ```bash
+```
    npm install
-   ```
-
+```
 3. **Configure environment**
-   
+
    Create a `.env` file in the root directory:
-   ```env
+```
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
+```
 4. **Run database migrations**
-   
-   Apply migrations in order from `supabase/migrations/` via Supabase Dashboard or CLI.
+
+Apply migrations in order from `supabase/migrations/` via Supabase Dashboard or CLI.
 
 5. **Start development server**
-   ```bash
+```
    npm run dev
-   ```
+```
 
 ---
 
 ## Project Structure
-
 ```
 src/
 ├── components/        # Reusable UI components
 │   ├── AccordionSection.tsx
+│   ├── BrowseProjects.tsx
+│   ├── CreatorCard.tsx
+│   ├── CreatorView.tsx      # Creator dashboard view
+│   ├── CreatorWelcomeScreen.tsx
+│   ├── IdeaFeedback.tsx
 │   ├── IdeaReactions.tsx
+│   ├── MessagesView.tsx     # Direct messaging interface
 │   ├── ProjectCard.tsx
+│   ├── ProjectPage.tsx      # Individual project view
+│   ├── ReviewForm.tsx
 │   ├── SearchBar.tsx
+│   ├── SideBar.tsx          # Dashboard navigation sidebar
+│   ├── UserView.tsx         # User dashboard view
 │   ├── XPIndicator.tsx
 │   └── ...
 ├── pages/             # Route components
+│   ├── AuthCallback.tsx
+│   ├── CreatorProfile.tsx
+│   ├── Dashboard.tsx        # Main dashboard orchestrator
 │   ├── Home.tsx
-│   ├── Dashboard.tsx
-│   ├── ProjectPage.tsx
+│   ├── Login.tsx
+│   ├── ProfilePage.tsx
+│   ├── ProfileSettings.tsx
 │   ├── ProjectForm.tsx
 │   └── ...
 ├── contexts/          # React Context providers
@@ -165,6 +179,24 @@ supabase/
     └── sec7_xp_triggers.sql
 ```
 
+## Key Changes Made:
+
+1. **Updated header** - Added "Latest Update: December 21, 2025" and changed status to include "Dashboard Restructuring"
+
+2. **Enhanced Features section** - Added mentions of:
+   - Modern Dashboard with sidebar navigation
+   - Persistent Navigation with unread message badges
+   - Mobile responsiveness improvements
+
+3. **Updated Project Structure** - Reorganized to show:
+   - New components: `SideBar.tsx`, `UserView.tsx`, `CreatorView.tsx`
+   - Moved components: `MessagesView.tsx` and `ProjectPage.tsx` now in components/
+   - Added descriptive comments for key components
+
+4. **Expanded "Recently Completed" section** - Added the dashboard UI restructuring achievements
+
+5. **Improved organization** - Better reflects the current component architecture
+
 ---
 
 ## Roadmap
@@ -180,6 +212,11 @@ supabase/
   - Fixed creator view not updating after first project creation
   - Fixed project hero banner images not persisting
   - Fixed review and feedback submissions failing for all users
+- [x] **Dashboard UI restructuring:**
+  - Implemented persistent sidebar navigation
+  - Created dedicated UserView and CreatorView components
+  - Enhanced mobile responsiveness with slide-out drawer
+  - Added unread message badge indicators
 
 ### In Progress
 - [ ] Profile view tracking (unique visitors instead of page loads)
@@ -215,7 +252,7 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-Please read the [DEVLOG.md](./DEVLOG.md) for technical context and architecture decisions.
+Please read the [DEVLOG](./DEVLOG/) for technical context and architecture decisions.
 
 ---
 
