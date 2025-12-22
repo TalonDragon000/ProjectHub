@@ -28,14 +28,14 @@ import {
 } from '../types';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
-import IdeaReactions from '../components/IdeaReactions';
-import IdeaFeedback from '../components/IdeaFeedback';
-import ReviewForm from '../components/ReviewForm';
-import ReviewsList from '../components/ReviewsList';
-import AccordionSection from '../components/AccordionSection';
-import NavBar from '../components/NavBar';
-import XPIndicator from '../components/XPIndicator';
-import DemoDisclaimerModal from '../components/DemoDisclaimerModal';
+import IdeaReactions from './IdeaReactions';
+import IdeaFeedback from './IdeaFeedback';
+import ReviewForm from './ReviewForm';
+import ReviewsList from './ReviewsList';
+import AccordionSection from './AccordionSection';
+import NavBar from './NavBar';
+import XPIndicator from './XPIndicator';
+import DemoDisclaimerModal from './DemoDisclaimerModal';
 
 type FlowSection = 'discover' | 'validate' | 'try' | 'review';
 

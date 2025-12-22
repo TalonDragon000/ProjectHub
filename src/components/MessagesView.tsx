@@ -213,7 +213,7 @@ export default function MessagesView() {
           <h2 className="text-xl font-bold text-slate-900">Messages</h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div id="conversation" className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-slate-600 mb-2">No conversations yet</p>
