@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types';
@@ -33,8 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('activeView', view);
   };
 
-  const refreshUnreadCount = async () => {
-    if (!profile) return;
+  const refreshUnreadCount = useCallback(async () => {
+    if (!profile) {
+      setUnreadMessageCount(0);
+      return;
+    }
 
     const { data, error } = await supabase.rpc('get_unread_message_count', {
       user_profile_id: profile.id,
@@ -43,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!error && data !== null) {
       setUnreadMessageCount(data);
     }
-  };
+  }, [profile]);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase

@@ -32,7 +32,7 @@ export default function IdeaFeedback({ projectId, userReaction, compact = false 
 
   useEffect(() => {
     loadFeedback();
-  }, [projectId]);
+  }, [projectId], profile);
 
   const loadFeedback = async () => {
     const { data, error } = await supabase
