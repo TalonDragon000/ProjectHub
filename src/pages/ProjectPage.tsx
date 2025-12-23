@@ -114,7 +114,8 @@ useEffect(() => {
     if (
       errorMessage.includes('X-Frame-Options') ||
       errorMessage.includes('Content Security Policy') ||
-      errorMessage.includes('Refused to display')
+      errorMessage.includes('Refused to display') && 
+      !embeddableLink.url.includes('projecthub.bolt.host')
     ) {
       setIframeError(true);
       setIframeLoading(false);
@@ -133,7 +134,7 @@ useEffect(() => {
     }
     console.error = originalConsoleError;
   };
-}, [embeddableLink, expandedSection]);
+}, [embeddableLink, expandedSection, iframeTimeoutRef]);
 
   const loadProject = async () => {
     setLoading(true);
