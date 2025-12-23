@@ -134,7 +134,7 @@ useEffect(() => {
     }
     console.error = originalConsoleError;
   };
-}, [embeddableLink, expandedSection, iframeTimeoutRef]);
+}, [embeddableLink, expandedSection]);
 
   const loadProject = async () => {
     setLoading(true);
