@@ -111,11 +111,9 @@ useEffect(() => {
   const originalConsoleError = console.error;
   console.error = function(...args) {
     const errorMessage = args.join(' ');
-    if (
-      (errorMessage.includes('X-Frame-Options') ||
+    if (errorMessage.includes('X-Frame-Options') ||
       errorMessage.includes('Content Security Policy') ||
       errorMessage.includes('Refused to display')
-      ) && !embeddableLink.url.includes('projecthub.bolt.host')
     ) {
       setIframeError(true);
       setIframeLoading(false);
@@ -491,7 +489,7 @@ useEffect(() => {
                       src={embeddableLink.url}
                       title={`${project.name} preview`}
                       className="w-full h-full"
-                      sandbox={embeddableLink.url.includes('projecthub.bolt.host') ? 'allow-scripts allow-popups allow-forms allow-same-origin' : 'allow-scripts allow-popups allow-forms'}
+                      sandbox='allow-scripts allow-popups allow-forms'
                       onLoad={() => {
                         if (iframeTimeoutRef.current) {
                           clearTimeout(iframeTimeoutRef.current);
@@ -513,7 +511,7 @@ useEffect(() => {
                     )}
 
                    {/* Error Overlay */}
-                   {iframeError && !embeddableLink.url.includes('projecthub.bolt.host') && (
+                   {iframeError && (
                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 text-white p-6">
                        <div className="text-center max-w-md">
                         <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-amber-500" />
