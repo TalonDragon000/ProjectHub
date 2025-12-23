@@ -112,10 +112,10 @@ useEffect(() => {
   console.error = function(...args) {
     const errorMessage = args.join(' ');
     if (
-      errorMessage.includes('X-Frame-Options') ||
+      (errorMessage.includes('X-Frame-Options') ||
       errorMessage.includes('Content Security Policy') ||
-      errorMessage.includes('Refused to display') && 
-      !embeddableLink.url.includes('projecthub.bolt.host')
+      errorMessage.includes('Refused to display')
+      ) && !embeddableLink.url.includes('projecthub.bolt.host')
     ) {
       setIframeError(true);
       setIframeLoading(false);
