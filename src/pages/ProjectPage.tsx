@@ -52,8 +52,8 @@ export default function ProjectPage() {
   const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [userReaction, setUserReaction] = useState<'need' | 'curious' | 'rethink' | null>(null);
-  const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState(false);
+  const [iframeLoading, setIframeLoading] = useState(true);
   const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -527,7 +527,6 @@ useEffect(() => {
                     </div>
                   )}
                   </div>
-
                   {/* Fallback link */}
                   <div className="flex justify-center">
                     <button
