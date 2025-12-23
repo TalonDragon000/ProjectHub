@@ -103,7 +103,7 @@ useEffect(() => {
   setIframeError(false);
   setIframeLoading(true);
 
-  const loadTimeout = setTimeout(() => {
+  iframeTimeoutRef.current = setTimeout(() => {
     setIframeError(true);
     setIframeLoading(false);
   }, 5000);
