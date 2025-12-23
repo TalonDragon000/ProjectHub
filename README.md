@@ -1,3 +1,5 @@
+<img width="2592" height="512" alt="banner" src="https://github.com/user-attachments/assets/439bcc63-3296-4df8-9069-800bf9c6df69" />
+
 # ProjectHub
 
 **Current Version:** v0.1.2 (December 2025)  
@@ -20,6 +22,8 @@ ProjectHub is a platform for discovering, supporting, and sharing startup projec
 
 ## Features
 
+<img width="auto" height="500" alt="edit project" src="https://github.com/user-attachments/assets/4a38c889-f18d-43db-8e3a-1b947b9e1655" />
+
 ### For Creators
 
 - **Multi-Step Project Creation** - Guided flow from idea to launch with draft saving
@@ -35,6 +39,10 @@ ProjectHub is a platform for discovering, supporting, and sharing startup projec
 - **Direct Messaging** - Connect with reviewers and potential collaborators
 - **Modern Dashboard** - Sidebar navigation with dedicated User and Creator views
 
+---
+
+<img width="auto" height="500" alt="dashboard" src="https://github.com/user-attachments/assets/d5bd7ff2-6069-4566-8b63-0c78409df86f" />
+
 ### For Users
 
 - **Project Discovery** - Browse by category (Games, SaaS, Tools, Apps, Design)
@@ -47,6 +55,10 @@ ProjectHub is a platform for discovering, supporting, and sharing startup projec
 - **Quick Feedback** - Send short messages directly to creators
 - **Reputation Building** - Earn XP for submitting feedback and writing reviews
 - **Achievement Badges** - Earn First 100 and Top 100 badges for early adoption and participation
+
+---
+
+<img width="883" height="852" alt="project page" src="https://github.com/user-attachments/assets/c5d2a43f-bed4-4111-a30e-ef4e61746820" />
 
 ### Platform Features
 

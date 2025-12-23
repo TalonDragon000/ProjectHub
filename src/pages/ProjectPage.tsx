@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Star,
@@ -26,16 +26,14 @@ import {
   ProjectIdea,
   QuickFeedback,
 } from '../types';
-import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
-import IdeaReactions from './IdeaReactions';
-import IdeaFeedback from './IdeaFeedback';
-import ReviewForm from './ReviewForm';
-import ReviewsList from './ReviewsList';
-import AccordionSection from './AccordionSection';
-import NavBar from './NavBar';
-import XPIndicator from './XPIndicator';
-import DemoDisclaimerModal from './DemoDisclaimerModal';
+import IdeaReactions from '../components/IdeaReactions';
+import IdeaFeedback from '../components/IdeaFeedback';
+import ReviewForm from '../components/ReviewForm';
+import ReviewsList from '../components/ReviewsList';
+import AccordionSection from '../components/AccordionSection';
+import NavBar from '../components/NavBar';
+import DemoDisclaimerModal from '../components/DemoDisclaimerModal';
 
 type FlowSection = 'discover' | 'validate' | 'try' | 'review';
 
@@ -54,6 +52,9 @@ export default function ProjectPage() {
   const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [userReaction, setUserReaction] = useState<'need' | 'curious' | 'rethink' | null>(null);
+  const [iframeLoading, setIframeLoading] = useState(true);
+  const [iframeError, setIframeError] = useState(false);
+  const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (project) {
@@ -94,6 +95,46 @@ export default function ProjectPage() {
       reviewsSubscription.unsubscribe();
     };
   }, [project?.id]);
+
+  // iframe error handling
+useEffect(() => {
+  if (!embeddableLink || expandedSection !== 'try') return;
+
+  setIframeError(false);
+  setIframeLoading(true);
+
+  iframeTimeoutRef.current = setTimeout(() => {
+    setIframeError(true);
+    setIframeLoading(false);
+  }, 5000);
+
+  const originalConsoleError = console.error;
+  console.error = function(...args) {
+    const errorMessage = args.join(' ');
+    if (
+      (errorMessage.includes('X-Frame-Options') ||
+      errorMessage.includes('Content Security Policy') ||
+      errorMessage.includes('Refused to display')
+      ) && !embeddableLink.url.includes('projecthub.bolt.host')
+    ) {
+      setIframeError(true);
+      setIframeLoading(false);
+      if (iframeTimeoutRef.current) {
+        clearTimeout(iframeTimeoutRef.current);
+        iframeTimeoutRef.current = null;
+      }
+    }
+    originalConsoleError.apply(console, args);
+  };
+
+  return () => {
+    if (iframeTimeoutRef.current) {
+    clearTimeout(iframeTimeoutRef.current);
+    iframeTimeoutRef.current = null;
+    }
+    console.error = originalConsoleError;
+  };
+}, [embeddableLink, expandedSection]);
 
   const loadProject = async () => {
     setLoading(true);
@@ -212,12 +253,6 @@ export default function ProjectPage() {
       return;
     }
     setExpandedSection(section);
-  };
-
-  const handleDisclaimerAccept = () => {
-    setDisclaimerAcknowledged(true);
-    setShowDisclaimerModal(false);
-    setExpandedSection('try');
   };
 
   if (loading) {
@@ -456,9 +491,45 @@ export default function ProjectPage() {
                       src={embeddableLink.url}
                       title={`${project.name} preview`}
                       className="w-full h-full"
-                      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                      sandbox={embeddableLink.url.includes('projecthub.bolt.host') ? 'allow-scripts allow-popups allow-forms allow-same-origin' : 'allow-scripts allow-popups allow-forms'}
+                      onLoad={() => {
+                        if (iframeTimeoutRef.current) {
+                          clearTimeout(iframeTimeoutRef.current);
+                          iframeTimeoutRef.current = null;
+                        }
+                        setIframeLoading(false);
+                        setIframeError(false);
+                      }}
                     />
+
+                    {/* Loading Overlay */}
+                    {iframeLoading && !iframeError && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 text-white">
+                        <div className="text-center">
+                          <div className="w-12 h-12 border-4 border-slate-600 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                          <p className="text-sm text-slate-300">Loading preview...</p>
+                        </div>
+                      </div>
+                    )}
+
+                   {/* Error Overlay */}
+                   {iframeError && !embeddableLink.url.includes('projecthub.bolt.host') && (
+                     <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 text-white p-6">
+                       <div className="text-center max-w-md">
+                        <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-amber-500" />
+                        <h4 className="text-xl font-semibold mb-3">Unable to Display Preview</h4>
+                        <p className="text-sm text-slate-300 mb-6">
+                          This website cannot be embedded due to security restrictions set by the site owner. 
+                          Don't worry - you can still access it directly!
+                        </p>
+                        <p className="text-sm text-slate-300 mb-6">
+                          Click the button below to open the website in a new tab.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   </div>
+
                   {/* Fallback link */}
                   <div className="flex justify-center">
                     <button
