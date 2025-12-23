@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Star,
@@ -54,6 +54,7 @@ export default function ProjectPage() {
   const [userReaction, setUserReaction] = useState<'need' | 'curious' | 'rethink' | null>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState(false);
+  const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (project) {
@@ -117,13 +118,19 @@ useEffect(() => {
     ) {
       setIframeError(true);
       setIframeLoading(false);
-      clearTimeout(loadTimeout);
+      if (iframeTimeoutRef.current) {
+        clearTimeout(iframeTimeoutRef.current);
+        iframeTimeoutRef.current = null;
+      }
     }
     originalConsoleError.apply(console, args);
   };
 
   return () => {
-    clearTimeout(loadTimeout);
+    if (iframeTimeoutRef.current) {
+    clearTimeout(iframeTimeoutRef.current);
+    iframeTimeoutRef.current = null;
+    }
     console.error = originalConsoleError;
   };
 }, [embeddableLink, expandedSection]);
@@ -485,6 +492,10 @@ useEffect(() => {
                       className="w-full h-full"
                       sandbox={embeddableLink.url.includes('projecthub.bolt.host') ? 'allow-scripts allow-popups allow-forms allow-same-origin' : 'allow-scripts allow-popups allow-forms'}
                       onLoad={() => {
+                        if (iframeTimeoutRef.current) {
+                          clearTimeout(iframeTimeoutRef.current);
+                          iframeTimeoutRef.current = null;
+                        }
                         setIframeLoading(false);
                         setIframeError(false);
                       }}
