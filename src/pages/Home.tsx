@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Clock, Grid3x3, Users } from 'lucide-react';
+import { TrendingUp, Clock, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Project, Profile } from '../types';
 import ProjectCarousel from '../components/ProjectCarousel';
@@ -108,7 +108,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <NavBar />
-
       <section id="hero" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4x text-center">
           <h1 className="text-5xl font-bold text-slate-900 mb-6">
@@ -124,7 +123,21 @@ export default function Home() {
           </div>
         </div>
       </section>
-
+      <section id="browse-by-category" className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <BrowseProjects
+            projects={categoryProjects}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            categoryLoading={categoryLoading}
+            title="Browse by Category"
+            titleLevel="h2"
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            showSortBy={true}
+          />
+        </div>
+      </section>
       <section id="featured-projects" className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
@@ -136,7 +149,6 @@ export default function Home() {
           <ProjectCarousel projects={featuredProjects} />
         </div>
       </section>
-
       <section id="newest-projects" className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
@@ -148,7 +160,6 @@ export default function Home() {
           <ProjectCarousel projects={newestProjects} />
         </div>
       </section>
-
       <section id="featured-creators" className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
@@ -188,23 +199,6 @@ export default function Home() {
           )}
         </div>
       </section>
-
-      <section id="browse-by-category" className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <BrowseProjects
-            projects={categoryProjects}
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-            categoryLoading={categoryLoading}
-            title="Browse by Category"
-            titleLevel="h2"
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            showSortBy={true}
-          />
-        </div>
-      </section>
-
       <Footer />
     </div>
   );
