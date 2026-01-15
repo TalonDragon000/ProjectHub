@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Rocket, MessageSquare, BarChart3, ChevronDown, Pen } from 'lucide-react';
+import { MessageSquare, BarChart3, ChevronDown, Pen } from 'lucide-react';
 import { useState } from 'react';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
@@ -40,9 +40,9 @@ export default function Landing() {
       
       {/* Hero Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-4xl mx-auto text-center">
             <div>
-              <div className="badge-info mb-4">
+              <div className="badge-info mb-4 inline-block">
                 ✨ Pre-launch
               </div>
               <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 cursor-default">
@@ -52,7 +52,7 @@ export default function Landing() {
                 Build with others, get early feedback, and stay accountable.<br/>
                 ProjectHub is where builders support builders.
               </p>
-              <div className="flex gap-4 flex-wrap">
+              <div className="flex gap-4 flex-wrap justify-center">
                 <Link to="/login" className="btn-primary btn-lg">
                   Create your project (free)
                 </Link>
@@ -94,11 +94,6 @@ export default function Landing() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
-              <div className="aspect-square bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
-                <img src="/images/landing/performance-reviewed.png" alt="Building Illustration" className="w-full h-full object-cover" />
-              </div>
-            </div>
             <div>
               <h2 className="text-4xl font-bold text-slate-900 mb-6 cursor-default">
                 ProjectHub is a 
@@ -122,6 +117,11 @@ export default function Landing() {
                 <span><strong>Build momentum through public accountability</strong></span>
               </li>
               </ul>
+            </div>
+            <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="aspect-square bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
+                <img src="/images/landing/performance-reviewed.png" alt="Building Illustration" className="w-full h-full object-cover" />
+              </div>
             </div>
           </div>
         </div>
@@ -256,10 +256,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
               <div className="aspect-square bg-gradient-to-br from-pink-100 to-purple-100 rounded-2xl flex items-center justify-center">
-                <p className="text-slate-400 text-center px-4">
-                  Illustration<br/>
-                  <span className="text-sm">(Person working)</span>
-                </p>
+                <img src="/images/landing/early.png" alt="Early Builders" className="w-fit object-cover" />
               </div>
             </div>
             <div>
@@ -318,18 +315,9 @@ export default function Landing() {
             </div>
             <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
               <div className="aspect-square bg-gradient-to-br from-cyan-100 to-blue-100 rounded-2xl flex items-center justify-center">
-                <p className="text-slate-400 text-center px-4">
-                  Illustration<br/>
-                  <span className="text-sm">(Person with laptop)</span>
-                </p>
+                <img src="/images/landing/for-you.png" alt="This is for you" className="w-fit object-cover" />
               </div>
             </div>
-          </div>
-          <div className="text-center mt-8">
-            <p className="text-slate-600 italic">
-              "You don't need a finalized product.<br/>
-              You just need a direction."
-            </p>
           </div>
         </div>
       </section>
@@ -369,10 +357,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
               <div className="aspect-square bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center">
-                <p className="text-slate-400 text-center px-4">
-                  Illustration<br/>
-                  <span className="text-sm">(Person with upward graph)</span>
-                </p>
+                <img src="/images/landing/momentum.png" alt="Turn your idea into momentum" className="w-full object-cover" />
               </div>
             </div>
             <div className="text-center md:text-left">
@@ -388,27 +373,6 @@ export default function Landing() {
               >
                 Create your project (free)
               </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Links Section */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8 bg-indigo-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap gap-8 justify-center md:justify-start">
-            <div>
-              <h3 className="font-bold text-slate-900 mb-2">LINKS</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li><Link to="/" className="hover:text-blue-600">About</Link></li>
-                <li><Link to="/browse" className="hover:text-blue-600">How it works</Link></li>
-                <li><Link to="/login" className="hover:text-blue-600">Contact</Link></li>
-              </ul>
-            </div>
-            <div className="md:ml-auto text-center md:text-right">
-              <p className="text-slate-600 text-sm mb-2"><strong>Illustrations by</strong></p>
-              <p className="text-slate-500 text-sm">freepik.com</p>
-              <p className="text-slate-500 text-sm mt-2">v.0.1.4</p>
             </div>
           </div>
         </div>

@@ -29,9 +29,9 @@ export default function Footer() {
           </div>
 
           {/* Social Links Section */}
-          <div className="flex flex-col items-center md:items-end space-y-4">
-            <h3 className="text-lg font-semibold text-white">Connect With Us</h3>
-            <div className="flex flex-col space-y-3">
+          <div className="flex flex-col space-y-2 md:items-end">
+            <h3 className="text-lg font-semibold text-white text-center md:text-left mb-2">Connect With Us</h3>
+            <div className="flex flex-col space-y-2 text-center md:text-left">
               <a 
                 href="https://github.com/Talondragon000/ProjectHub" 
                 target="_blank"
@@ -43,7 +43,7 @@ export default function Footer() {
                   alt="GitHub" 
                   className="w-4 h-4 group-hover:scale-110 transition-transform" 
                 />
-                <span className="font-medium">GitHub Repository</span>
+                <span className="font-semibold text-sm">GitHub Repository</span>
               </a>
               <a 
                 href="https://www.x.com/ProjectHub_" 
@@ -56,7 +56,7 @@ export default function Footer() {
                   alt="X" 
                   className="h-5 w-5 invert group-hover:scale-110 transition-transform" 
                 />
-                <span className="font-medium">@ProjectHub_</span>
+                <span className="font-semibold text-sm">@ProjectHub_</span>
               </a>
             </div>
           </div>
@@ -67,6 +67,9 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-slate-400 text-sm">
               © 2025 ProjectHub. All rights reserved. <span className="text-slate-500">v0.1.3</span>
+            </p>
+            <p className="text-slate-400 text-sm">
+              Illustrations by <a href="https://www.freepik.com/" target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:text-indigo-400 transition-colors">freepik.com</a>
             </p>
             <p className="text-slate-400 text-sm">
               Built with <span className="text-red-400">❤️</span> by{' '}
