@@ -35,7 +35,7 @@ export default function CreatorCard({ creator }: CreatorCardProps) {
           )}
         </div>
 
-        <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
+        <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">
           {creator.display_name}
         </h3>
 
@@ -57,7 +57,7 @@ export default function CreatorCard({ creator }: CreatorCardProps) {
           )}
         </div>
 
-        <div className=" px-20 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+        <div className="btn-primary text-sm">
           View Profile
         </div>
       </div>

@@ -384,7 +384,7 @@ export default function ProjectForm() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="page-gradient">
       <NavBar />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -396,7 +396,7 @@ export default function ProjectForm() {
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                       currentStep >= step.num
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-indigo-500 text-white'
                         : 'bg-slate-200 text-slate-500'
                     }`}
                   >
@@ -404,7 +404,7 @@ export default function ProjectForm() {
                   </div>
                   <span
                     className={`mt-2 text-sm font-medium ${
-                      currentStep >= step.num ? 'text-blue-600' : 'text-slate-500'
+                      currentStep >= step.num ? 'text-indigo-600' : 'text-slate-500'
                     }`}
                   >
                     {step.label}
@@ -413,7 +413,7 @@ export default function ProjectForm() {
                 {idx < steps.length - 1 && (
                   <div
                     className={`w-24 h-1 mx-4 mb-6 rounded transition-all ${
-                      currentStep > step.num ? 'bg-blue-600' : 'bg-slate-200'
+                      currentStep > step.num ? 'bg-indigo-500' : 'bg-slate-200'
                     }`}
                   />
                 )}
@@ -428,13 +428,13 @@ export default function ProjectForm() {
           </h1>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+            <div className="mb-6 alert-error">
               {error}
             </div>
           )}
 
           {saveMessage && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+            <div className="mb-6 alert-success">
               {saveMessage}
             </div>
           )}
@@ -449,7 +449,7 @@ export default function ProjectForm() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="input-field"
                   placeholder="My Awesome Project"
                   required
                 />
@@ -463,7 +463,7 @@ export default function ProjectForm() {
                   value={problemArea}
                   onChange={(e) => setProblemArea(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  className="textarea-field"
                   placeholder="What problem does this project solve? Who is it for?"
                   required
                 />
@@ -480,7 +480,7 @@ export default function ProjectForm() {
                   type="text"
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="input-field"
                   placeholder="e.g., productivity, automation, mobile, AI"
                 />
                 <p className="mt-1 text-sm text-slate-500">
@@ -495,7 +495,7 @@ export default function ProjectForm() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none capitalize"
+                  className="select-field capitalize"
                   required
                 >
                   {categories.map((cat) => (
@@ -516,7 +516,7 @@ export default function ProjectForm() {
                   type="url"
                   value={heroImage}
                   onChange={(e) => setHeroImage(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="input-field"
                   placeholder="https://example.com/image.jpg"
                 />
                 <p className="mt-1 text-sm text-slate-500">
@@ -596,7 +596,7 @@ export default function ProjectForm() {
                     id="collaboration"
                     checked={collaborationOpen}
                     onChange={(e) => setCollaborationOpen(e.target.checked)}
-                    className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
                   />
                   <div className="flex-1">
                     <label htmlFor="collaboration" className="flex items-center space-x-2 cursor-pointer">
@@ -629,7 +629,7 @@ export default function ProjectForm() {
                     type="text"
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
-                    className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="input-field flex-1"
                     placeholder="my-awesome-project"
                     required
                     pattern="[a-z0-9-]+"
@@ -649,7 +649,7 @@ export default function ProjectForm() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={6}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  className="textarea-field"
                   placeholder="Provide a detailed description of your project, its features, and what makes it unique..."
                   required
                 />
@@ -665,7 +665,7 @@ export default function ProjectForm() {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as 'active' | 'paused' | 'completed')}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none capitalize"
+                  className="select-field capitalize"
                   required
                 >
                   <option value="active">Active - Currently working on it</option>
@@ -682,7 +682,7 @@ export default function ProjectForm() {
                   type="url"
                   value={demoUrl || ''}
                   onChange={(e) => setDemoUrl(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="input-field"
                   placeholder="https://your-project.com"
                 />
                 <p className="mt-1 text-sm text-slate-500">
@@ -731,7 +731,7 @@ export default function ProjectForm() {
                     id="publish"
                     checked={isPublished}
                     onChange={(e) => setIsPublished(e.target.checked)}
-                    className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
                   />
                   <div className="flex-1">
                     <label htmlFor="publish" className="font-medium text-slate-900 cursor-pointer">
@@ -779,7 +779,7 @@ export default function ProjectForm() {
                   type="button"
                   onClick={handleNext}
                   disabled={loading}
-                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary flex items-center space-x-2"
                 >
                   <span>{loading ? 'Saving...' : 'Save & Continue'}</span>
                 </button>
@@ -788,7 +788,7 @@ export default function ProjectForm() {
                   type="button"
                   onClick={handlePublish}
                   disabled={loading}
-                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary flex items-center space-x-2"
                 >
                   <Save className="w-5 h-5" />
                   <span>{loading ? 'Saving...' : isPublished ? 'Publish Project' : 'Save as Draft'}</span>

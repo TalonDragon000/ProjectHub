@@ -40,7 +40,7 @@ export default function SideBar() {
             onClick={() => setActiveView('user')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
               activeView === 'user'
-                ? 'bg-blue-50 text-blue-600'
+                ? 'bg-indigo-50 text-indigo-600'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
@@ -52,7 +52,7 @@ export default function SideBar() {
             onClick={() => setActiveView('creator')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
               activeView === 'creator'
-                ? 'bg-blue-50 text-blue-600'
+                ? 'bg-indigo-50 text-indigo-600'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
@@ -64,7 +64,7 @@ export default function SideBar() {
             onClick={() => setActiveView('messages')}
             className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
               activeView === 'messages'
-                ? 'bg-blue-50 text-blue-600'
+                ? 'bg-indigo-50 text-indigo-600'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
@@ -73,7 +73,7 @@ export default function SideBar() {
               <span className="font-medium">Messages</span>
             </div>
             {unreadMessageCount > 0 && (
-              <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-full">
+              <span className="px-2 py-0.5 bg-indigo-600 text-white text-xs font-bold rounded-full">
                 {unreadMessageCount}
               </span>
             )}

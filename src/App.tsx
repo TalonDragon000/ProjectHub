@@ -4,7 +4,8 @@ import { Suspense,lazy } from 'react';
 import LoadingFallback from './components/LoadingFallback';
 
 // Lazy load all page components
-const Home = lazy(() => import('./pages/Home'));
+const Landing = lazy(() => import('./pages/Landing'));
+const Browse = lazy(() => import('./pages/Browse'));
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const ProjectPage = lazy(() => import('./pages/ProjectPage'));
@@ -19,7 +20,8 @@ function App() {
       <BrowserRouter>
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/browse" element={<Browse />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/project/:slug" element={<ProjectPage />} />

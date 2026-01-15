@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="flex flex-col items-center md:items-start space-y-4">
             <div className="flex items-center space-x-2">
-              <Grid3x3 className="w-8 h-8 text-blue-400" />
+              <Grid3x3 className="w-8 h-8 text-indigo-400" />
               <span className="text-2xl font-bold">ProjectHub</span>
             </div>
             <p className="text-slate-400 text-sm text-center md:text-left max-w-xs">
@@ -74,7 +74,7 @@ export default function Footer() {
                 href="https://github.com/Talondragon000" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-white hover:text-blue-400 transition-colors"
+                className="font-semibold text-white hover:text-indigo-400 transition-colors"
               >
                 Talondragon000
               </a>

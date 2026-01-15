@@ -27,14 +27,14 @@ export default function Dashboard() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="page-gradient flex items-center justify-center">
         <div className="text-xl text-slate-600">Loading dashboard...</div>
       </div>
     );
   }
 
   return (
-    <div className="max-h-screen bg-slate-50 flex">
+    <div className="max-h-screen page-gradient flex">
       <SideBar />
       <div className="flex-1 mx-auto overflow-y-auto px-8">
         <div className="flex flex-col py-8">

@@ -9,7 +9,7 @@ import SearchBar from '../components/SearchBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 
-export default function Home() {
+export default function Browse() {
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [newestProjects, setNewestProjects] = useState<Project[]>([]);
   const [featuredCreators, setFeaturedCreators] = useState<Profile[]>([]);
@@ -106,13 +106,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="page-gradient">
       <NavBar />
       <section id="hero" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4x text-center">
           <h1 className="text-5xl font-bold text-slate-900 mb-6">
             Discover & Support
-            <span className="block text-blue-600">Startup Projects</span>
+            <span className="block bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent">Startup Projects</span>
           </h1>
           <p className="text-xl text-slate-600 mb-12">
             Find amazing projects built by solo creators and freelancers. Leave reviews, provide feedback, and support their work.
@@ -142,7 +142,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
-              <TrendingUp className="w-6 h-6 text-blue-600" />
+              <TrendingUp className="w-6 h-6 text-indigo-500" />
               <h2 className="text-3xl font-bold text-slate-900">Featured Projects</h2>
             </div>
           </div>
@@ -153,7 +153,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
-              <Clock className="w-6 h-6 text-blue-600" />
+              <Clock className="w-6 h-6 text-indigo-500" />
               <h2 className="text-3xl font-bold text-slate-900">Newest Projects</h2>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
-              <Users className="w-6 h-6 text-blue-600" />
+              <Users className="w-6 h-6 text-indigo-500" />
               <h2 className="text-3xl font-bold text-slate-900">Featured Creators</h2>
             </div>
           </div>

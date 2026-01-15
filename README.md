@@ -102,6 +102,25 @@ Earn experience points for community participation:
 
 ---
 
+## Design System
+
+ProjectHub uses a consolidated component-class system for consistent, maintainable styling:
+
+- **Semantic CSS Classes** - Reusable components like `btn-primary`, `input-field`, `card`, `page-gradient`
+- **Theme Guidelines** - Complete design system with color palette, typography, and accessibility rules
+- **Easy Maintenance** - Update styling across the entire app by editing `src/index.css`
+
+**Quick Example:**
+```tsx
+<button className="btn-primary">Sign Up</button>
+<input className="input-field" placeholder="Email" />
+<div className="page-gradient">...</div>
+```
+
+📖 **Full Reference:** See [`.cursor/Theme.md`](./.cursor/Theme.md) for complete class reference, usage examples, and design guidelines.
+
+---
+
 ## Quick Start
 
 ### Prerequisites

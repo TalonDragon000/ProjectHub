@@ -20,3 +20,286 @@
     transform: translate(-50%, -50%) translateY(-10px);
   }
 }
+
+:root {
+  /* Primary Brand Colors - Keep your friendly blue-purple gradient */
+  --color-primary: 99 102 241;      /* indigo-500 */
+  --color-primary-light: 238 242 255; /* indigo-50 */
+  --color-accent: 147 51 234;       /* purple-600 */
+  --color-accent-light: 250 245 255; /* purple-50 */
+  
+  /* Neutral Palette - Warm grays for welcoming feel */
+  --color-surface: 255 255 255;     /* Pure white */
+  --color-surface-alt: 248 250 252; /* slate-50 */
+  --color-surface-elevated: 241 245 249; /* slate-100 */
+  
+  /* Text Hierarchy - High contrast for accessibility */
+  --color-text-primary: 15 23 42;   /* slate-900 */
+  --color-text-secondary: 71 85 105; /* slate-600 */
+  --color-text-tertiary: 148 163 184; /* slate-400 */
+  
+  /* Interactive States */
+  --color-border: 226 232 240;      /* slate-200 */
+  --color-border-focus: 99 102 241; /* indigo-500 */
+  --color-success: 34 197 94;       /* green-500 */
+  --color-warning: 251 146 60;      /* orange-400 */
+  --color-error: 239 68 68;         /* red-500 */
+  
+  /* Spacing & Layout */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+  
+  /* Shadows - Subtle depth */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+/* ============================================
+   COMPONENT CLASSES - Theme Consistency
+   ============================================ */
+
+@layer components {
+  
+  /* ===== BUTTONS ===== */
+  
+  /* Primary CTA Button - Dark, prominent */
+  .btn-primary {
+    @apply px-6 py-3 bg-slate-900 text-white rounded-full font-semibold 
+           hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl 
+           transform hover:-translate-y-0.5 
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+  }
+  
+  /* Secondary Button - Light with border */
+  .btn-secondary {
+    @apply px-6 py-3 bg-white text-slate-900 rounded-full font-semibold 
+           hover:bg-slate-50 transition-all border-2 border-slate-200;
+  }
+  
+  /* Ghost/Text Button - Minimal */
+  .btn-ghost {
+    @apply px-4 py-2 text-slate-600 hover:bg-slate-100 
+           rounded-lg font-medium transition-colors;
+  }
+  
+  /* Danger Button - For destructive actions */
+  .btn-danger {
+    @apply px-6 py-3 bg-red-600 text-white rounded-full font-semibold 
+           hover:bg-red-700 transition-all shadow-lg hover:shadow-xl 
+           transform hover:-translate-y-0.5;
+  }
+  
+  /* Small Button Variant */
+  .btn-sm {
+    @apply px-4 py-2 text-sm;
+  }
+  
+  /* Large Button Variant */
+  .btn-lg {
+    @apply px-8 py-4 text-lg;
+  }
+  
+  
+  /* ===== FORM INPUTS ===== */
+  
+  /* Standard Input Field */
+  .input-field {
+    @apply w-full px-4 py-3 border border-slate-200 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-indigo-500 
+           focus:ring-offset-2 focus:border-transparent transition-all
+           placeholder:text-slate-400;
+  }
+  
+  /* Textarea */
+  .textarea-field {
+    @apply w-full px-4 py-3 border border-slate-200 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-indigo-500 
+           focus:ring-offset-2 focus:border-transparent resize-none transition-all
+           placeholder:text-slate-400;
+  }
+  
+  /* Select Dropdown */
+  .select-field {
+    @apply w-full px-4 py-3 border border-slate-200 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-indigo-500 
+           focus:ring-offset-2 focus:border-transparent transition-all
+           bg-white;
+  }
+  
+  /* Input with Icon (add extra left padding in component) */
+  .input-with-icon {
+    @apply input-field pl-10;
+  }
+  
+  
+  /* ===== LINKS ===== */
+  
+  /* Primary Text Link - Branded */
+  .link-primary {
+    @apply text-indigo-600 hover:text-indigo-700 font-semibold 
+           underline-offset-4 hover:underline transition-colors;
+  }
+  
+  /* Secondary Text Link - Subtle */
+  .link-secondary {
+    @apply text-slate-600 hover:text-slate-900 transition-colors;
+  }
+  
+  
+  /* ===== CARDS ===== */
+  
+  /* Standard Card */
+  .card {
+    @apply bg-white rounded-2xl p-6 border border-slate-200 
+           shadow-lg transition-all;
+  }
+  
+  /* Hoverable Card - For links/clickable cards */
+  .card-hover {
+    @apply card hover:shadow-xl hover:-translate-y-1;
+  }
+  
+  /* Glass Card - For overlays */
+  .card-glass {
+    @apply bg-white/50 backdrop-blur-sm rounded-3xl p-8 
+           border border-white/60;
+  }
+  
+  /* Compact Card */
+  .card-compact {
+    @apply bg-white rounded-xl p-4 border border-slate-200 shadow-sm;
+  }
+  
+  
+  /* ===== BADGES ===== */
+  
+  /* Base Badge Style */
+  .badge {
+    @apply px-4 py-2 rounded-full text-sm font-semibold inline-block;
+  }
+  
+  /* Info Badge - Blue */
+  .badge-info {
+    @apply badge bg-blue-100 text-blue-800;
+  }
+  
+  /* Success Badge - Green */
+  .badge-success {
+    @apply badge bg-green-100 text-green-800;
+  }
+  
+  /* Warning Badge - Orange */
+  .badge-warning {
+    @apply badge bg-orange-100 text-orange-800;
+  }
+  
+  /* Error Badge - Red */
+  .badge-error {
+    @apply badge bg-red-100 text-red-800;
+  }
+  
+  /* Neutral Badge - Gray */
+  .badge-neutral {
+    @apply badge bg-slate-100 text-slate-700;
+  }
+  
+  
+  /* ===== LAYOUT ===== */
+  
+  /* Page Container with Brand Gradient */
+  .page-gradient {
+    @apply min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50;
+  }
+  
+  /* Standard Page Container */
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Section Spacing */
+  .section {
+    @apply py-16 px-4 sm:px-6 lg:px-8;
+  }
+  
+  
+  /* ===== ALERTS/NOTIFICATIONS ===== */
+  
+  /* Base Alert Style */
+  .alert {
+    @apply p-4 rounded-lg border text-sm;
+  }
+  
+  /* Success Alert */
+  .alert-success {
+    @apply alert bg-green-50 border-green-200 text-green-700;
+  }
+  
+  /* Error Alert */
+  .alert-error {
+    @apply alert bg-red-50 border-red-200 text-red-700;
+  }
+  
+  /* Warning Alert */
+  .alert-warning {
+    @apply alert bg-amber-50 border-amber-200 text-amber-800;
+  }
+  
+  /* Info Alert */
+  .alert-info {
+    @apply alert bg-blue-50 border-blue-200 text-blue-800;
+  }
+  
+  
+  /* ===== TYPOGRAPHY ===== */
+  
+  /* Heading Styles */
+  .heading-hero {
+    @apply text-5xl md:text-6xl font-bold text-slate-900;
+  }
+  
+  .heading-section {
+    @apply text-4xl font-bold text-slate-900;
+  }
+  
+  .heading-subsection {
+    @apply text-2xl font-semibold text-slate-900;
+  }
+  
+  .heading-component {
+    @apply text-xl font-semibold text-slate-900;
+  }
+  
+  /* Text Gradient - For emphasis */
+  .text-gradient-brand {
+    @apply bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 
+           bg-clip-text text-transparent;
+  }
+  
+  
+  /* ===== UTILITIES ===== */
+  
+  /* Loading Skeleton */
+  .skeleton {
+    @apply animate-pulse bg-slate-200 rounded;
+  }
+  
+  /* Focus Ring - For custom interactive elements */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 
+           focus:ring-offset-2;
+  }
+  
+  /* Hover Scale - Subtle interaction */
+  .hover-scale {
+    @apply transition-transform hover:scale-105;
+  }
+  
+  /* Hover Lift - Subtle lift effect */
+  .hover-lift {
+    @apply transition-all hover:-translate-y-1;
+  }
+}
