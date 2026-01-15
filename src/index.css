@@ -21,6 +21,25 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+@layer utilities {
+  .shimmer-hover {
+    background-size: 200% auto;
+  }
+  
+  .shimmer-hover:hover {
+    animation: shimmer 2s ease-in-out infinite;
+  }
+}
+
 :root {
   /* Primary Brand Colors - Keep your friendly blue-purple gradient */
   --color-primary: 99 102 241;      /* indigo-500 */

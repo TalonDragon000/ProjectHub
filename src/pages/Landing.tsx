@@ -104,12 +104,24 @@ export default function Landing() {
                 ProjectHub is a 
                 <br/><span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent">pre-launch home</span>.
               </h2>
-              <div className="space-y-4 text-lg text-slate-600">
-                <p><strong>Share ideas early</strong> - before they're polished</p>
-                <p><strong>Get structured, honest feedback</strong></p>
-                <p><strong>Let others try your demos</strong> and start validating it publicly</p>
-                <p><strong>Build momentum through public accountability</strong></p>
-              </div>
+              <ul className="space-y-4 text-lg text-slate-600">
+               <li className="flex items-start">
+                <span className="text-blue-600 mr-3 mt-1">•</span>
+                <span><strong>Share ideas early</strong> - before they're polished</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-blue-600 mr-3 mt-1">•</span>
+                <span><strong>Get structured, honest feedback</strong></span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-blue-600 mr-3 mt-1">•</span>
+                <span><strong>Let others try your demos</strong> and start validating it publicly</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-blue-600 mr-3 mt-1">•</span>
+                <span><strong>Build momentum through public accountability</strong></span>
+              </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -176,18 +188,27 @@ export default function Landing() {
               </div>
             </div>
             <div>
-              <h2 className="text-4xl font-bold text-slate-900 mb-6">
-                From messy ideas to <span className="text-blue-600">real projects</span>
+              <h2 className="text-4xl font-bold text-slate-900 mb-6 cursor-default">
+                From messy ideas to <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent hover:from-blue-500 hover:via-blue-600 hover:to-purple-500 hover:scale-105 transition-all duration-300">real projects</span>
               </h2>
               <p className="text-lg text-slate-600 mb-4">
                 Start with rough thoughts, half-formed ideas, or experiments. 
                When something feels worth pursuing, turn it into a project and start validating it publicly.
               </p>
-              <p className="text-lg text-slate-600 mb-4">
-              • Capture ideas without pressure<br/>
-              • Pick which ones are worth exploring<br/>
-              • Gradually move from private → public<br/>
-              </p>
+              <ul className="space-y-4 text-lg text-slate-600">
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-3 mt-1">•</span>
+                  <span><strong>Capture ideas</strong> without pressure</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-3 mt-1">•</span>
+                  <span><strong>Pick which ones</strong> are worth exploring</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-3 mt-1">•</span>
+                  <span><strong>private → public</strong> moves are gradual and seamless</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -199,14 +220,26 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-4xl font-bold text-slate-900 mb-6 cursor-default">
-                Built for <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent">signal, not vanity</span>
+                Built for <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent hover:from-blue-600 hover:via-blue-700 hover:to-purple-600 hover:scale-105 transition-all duration-300">signal, not vanity</span>
               </h2>
-              <p className="text-lg text-slate-600 mb-4">
-              • Feedback instead of likes<br/>
-              • Demos instead of pitch decks<br/>
-              • Early validation instead of post-launch regret<br/>
-              • Builders supporting builders — not shouting into the void
-              </p>
+              <ul className="space-y-4 text-lg text-slate-600">
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-3 mt-1">•</span>
+                  <span><strong>Feedback</strong> instead of likes</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-3 mt-1">•</span>
+                  <span><strong>Demos</strong> instead of pitch decks</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-3 mt-1">•</span>
+                  <span><strong>Early validation</strong> instead of post-launch regret</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-3 mt-1">•</span>
+                  <span><strong>Builders supporting builders</strong> — not shouting into the void</span>
+                </li>
+              </ul>
             </div>
             <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
               <div className="aspect-square bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center">
@@ -230,8 +263,8 @@ export default function Landing() {
               </div>
             </div>
             <div>
-              <h2 className="text-4xl font-bold text-slate-900 mb-6">
-                Early builders use <span className="text-blue-600">ProjectHub to:</span>
+              <h2 className="text-4xl font-bold text-slate-900 mb-6 cursor-default">
+                <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent hover:from-blue-600 hover:via-blue-700 hover:to-purple-600 hover:scale-105 transition-all duration-300">Early Builders</span> use ProjectHub to:
               </h2>
               <ul className="space-y-4 text-lg text-slate-600">
                 <li className="flex items-start">
@@ -261,8 +294,8 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-slate-900 mb-6">
-                ProjectHub is for you if you're:
+              <h2 className="text-4xl font-bold text-slate-900 mb-6 cursor-default">
+                ProjectHub <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent hover:from-blue-600 hover:via-blue-600 hover:to-purple-600 hover:scale-105 transition-all duration-300">is for you</span> if you're:
               </h2>
               <ul className="space-y-4 text-lg text-slate-600">
                 <li className="flex items-start">
@@ -343,15 +376,15 @@ export default function Landing() {
               </div>
             </div>
             <div className="text-center md:text-left">
-              <h2 className="text-5xl font-bold text-slate-900 mb-6">
-                Turn your Idea into <span className="text-blue-600">momentum</span>
+              <h2 className="text-5xl font-bold text-slate-900 mb-6 cursor-default">
+                Turn your Idea into <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent hover:from-blue-500 hover:via-blue-300 hover:to-purple-500 hover:scale-105 hover:shimmer-hover transition-all duration-300">momentum</span>
               </h2>
               <p className="text-xl text-slate-600 mb-8">
                 No pitch decks. No pressure. Just progress.
               </p>
               <Link
                 to="/login"
-                className="px-8 py-4 bg-slate-900 text-white rounded-full font-semibold hover:bg-slate-800 transition-all shadow-lg inline-block"
+                className="btn-primary btn-lg"
               >
                 Create your project (free)
               </Link>
