@@ -28,7 +28,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       <div className="p-6 flex-1 flex flex-col">
         {/* Category & Rating Row */}
         <div className="flex items-center justify-between mb-2">
-          <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full capitalize">
+          <span className="px-4 py-2 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full capitalize">
             {project.category}
           </span>
           <div className="flex items-center space-x-1">
@@ -41,7 +41,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+        <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors">
           {project.name}
         </h3>
 

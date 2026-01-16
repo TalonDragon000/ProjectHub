@@ -10,22 +10,16 @@ export default function NavBar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-2">
-              <Grid3x3 className="w-8 h-8 text-blue-600" />
+              <Grid3x3 className="w-8 h-8 text-indigo-500" />
               <span className="text-xl font-bold text-slate-900">ProjectHub</span>
             </Link>
             <div className="flex items-center space-x-4">
               {user ? (
-                <Link
-                  to="/dashboard"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
+                <Link to="/dashboard" className="btn-primary">
                   Dashboard
                 </Link>
               ) : (
-                <Link
-                  to="/login"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
+                <Link to="/login" className="btn-primary">
                   Login
                 </Link>
               )}

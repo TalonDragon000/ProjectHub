@@ -1,4 +1,4 @@
-import { Grid3x3, Github } from 'lucide-react';
+import { Grid3x3, Github, Twitter } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="flex flex-col items-center md:items-start space-y-4">
             <div className="flex items-center space-x-2">
-              <Grid3x3 className="w-8 h-8 text-blue-400" />
+              <Grid3x3 className="w-8 h-8 text-indigo-400" />
               <span className="text-2xl font-bold">ProjectHub</span>
             </div>
             <p className="text-slate-400 text-sm text-center md:text-left max-w-xs">
@@ -21,43 +21,38 @@ export default function Footer() {
           {/* Quick Links Section */}
           <div className="flex flex-col items-center space-y-4">
             <h3 className="text-lg font-semibold text-white">Quick Links</h3>
-            <nav className="flex flex-col space-y-2 text-slate-400 text-sm">
-              <a href="/" className="hover:text-white transition-colors">Home</a>
-              <a href="/browse" className="hover:text-white transition-colors">Browse Projects</a>
-              <a href="/dashboard" className="hover:text-white transition-colors">Dashboard</a>
+            <nav className="flex flex-col space-y-2 text-white font-semibold text-sm text-center md:text-left">
+              <a href="/" className="hover:text-indigo-400 transition-colors">Home</a>
+              <a href="/browse" className="hover:text-indigo-400 transition-colors">Browse Projects</a>
+              <a href="/dashboard" className="hover:text-indigo-400 transition-colors">Dashboard</a>
             </nav>
           </div>
 
           {/* Social Links Section */}
           <div className="flex flex-col items-center md:items-end space-y-4">
-            <h3 className="text-lg font-semibold text-white">Connect With Us</h3>
-            <div className="flex flex-col space-y-3">
-              <a 
-                href="https://github.com/Talondragon000/ProjectHub" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-slate-400 hover:text-white transition-colors group"
-              >
-                <img 
-                  src="/images/github-mark-white.png" 
-                  alt="GitHub" 
-                  className="w-4 h-4 group-hover:scale-110 transition-transform" 
-                />
-                <span className="font-medium">GitHub Repository</span>
-              </a>
-              <a 
-                href="https://www.x.com/ProjectHub_" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-slate-400 hover:text-white transition-colors group"
-              >
-                <img 
-                  src="/images/x-mark.png" 
-                  alt="X" 
-                  className="h-5 w-5 invert group-hover:scale-110 transition-transform" 
-                />
-                <span className="font-medium">@ProjectHub_</span>
-              </a>
+            <div>
+              <h3 className="text-lg font-semibold text-white text-center md:text-left mb-4">Connect With Us</h3>
+                <div className="flex flex-col space-y-2 mb-2">
+                  <a className="flex space-x-2 hover:text-indigo-400 transition-colors group text-sm font-semibold"
+                  href="https://github.com/Talondragon000/ProjectHub" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >
+                  <Github className="h-5 w-5" />
+                  <span>GitHub Repository</span>
+                  </a>
+                </div>
+                <div className="flex flex-col">
+                  <a 
+                  href="https://www.x.com/ProjectHub_" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex space-x-2 hover:text-indigo-400 transition-colors group text-sm font-semibold"
+                  >
+                  <Twitter className="h-5 w-5"/>
+                  <span>@ProjectHub_</span>
+                  </a>
+                </div>
             </div>
           </div>
         </div>
@@ -66,7 +61,10 @@ export default function Footer() {
         <div className="pt-8 border-t border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-slate-400 text-sm">
-              © 2025 ProjectHub. All rights reserved. <span className="text-slate-500">v0.1.3</span>
+              © 2025 ProjectHub. All rights reserved. <span className="text-slate-500">v0.1.3.2</span>
+            </p>
+            <p className="text-slate-400 text-sm">
+              Illustrations by <a href="https://www.freepik.com/" target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:text-indigo-400 transition-colors">freepik.com</a>
             </p>
             <p className="text-slate-400 text-sm">
               Built with <span className="text-red-400">❤️</span> by{' '}
@@ -74,7 +72,7 @@ export default function Footer() {
                 href="https://github.com/Talondragon000" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-white hover:text-blue-400 transition-colors"
+                className="font-semibold text-white hover:text-indigo-400 transition-colors"
               >
                 Talondragon000
               </a>

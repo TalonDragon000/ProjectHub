@@ -40,7 +40,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center px-4">
+    <div className="page-gradient flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="inline-block mb-4">
@@ -58,7 +58,7 @@ export default function Login() {
 
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+            <div className="mb-4 alert-error">
               {error}
             </div>
           )}
@@ -75,7 +75,7 @@ export default function Login() {
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="input-with-icon pr-4"
                     placeholder="John Doe"
                     required={isSignUp}
                   />
@@ -91,7 +91,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="input-with-icon pr-4"
                   placeholder="you@example.com"
                   required
                 />
@@ -106,7 +106,7 @@ export default function Login() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="input-with-icon pr-4"
                   placeholder="••••••••"
                   required
                   minLength={6}
@@ -117,7 +117,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full"
             >
               {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
             </button>
@@ -129,7 +129,7 @@ export default function Login() {
                 setIsSignUp(!isSignUp);
                 setError('');
               }}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="link-primary"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
@@ -137,7 +137,7 @@ export default function Login() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link to="/" className="text-slate-600 hover:text-slate-900 transition-colors">
+          <Link to="/" className="link-secondary">
             Back to home
           </Link>
         </div>

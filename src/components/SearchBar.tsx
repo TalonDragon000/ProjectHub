@@ -111,7 +111,7 @@ export default function SearchBar({
 
   return (
     <div className={`relative ${className}`}>
-      <div className="flex items-center bg-white rounded-2xl shadow-xl p-4 border-2 border-slate-200 focus-within:border-blue-500 transition-all">
+      <div className="flex items-center bg-white rounded-2xl shadow-xl p-4 border-2 border-slate-200 focus-within:border-indigo-500 transition-all">
         <Search className="w-6 h-6 text-slate-400 ml-2" />
         <input
           type="text"

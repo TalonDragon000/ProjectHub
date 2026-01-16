@@ -162,7 +162,7 @@ export default function ReviewForm({ projectId, projectSlug, onReviewSubmitted }
                 value={reviewTitle}
                 onChange={(e) => setReviewTitle(e.target.value)}
                 maxLength={100}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="input-field py-2"
                 placeholder="Sum up your experience"
                 required
               />
@@ -180,7 +180,7 @@ export default function ReviewForm({ projectId, projectSlug, onReviewSubmitted }
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
                 rows={4}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                className="textarea-field py-2"
                 placeholder="Share your thoughts about this project..."
                 required
               />
@@ -194,7 +194,7 @@ export default function ReviewForm({ projectId, projectSlug, onReviewSubmitted }
         ) : (
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
             <p className="text-sm text-slate-600">
-              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link to="/login" className="link-primary">
                 Sign in
               </Link>{' '}
               to review this project and earn XP.
@@ -206,7 +206,7 @@ export default function ReviewForm({ projectId, projectSlug, onReviewSubmitted }
         <button
           type="submit"
           disabled={rating === 0 || submitting}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary w-full"
         >
           {submitting ? 'Submitting...' : 'Submit Review'}
         </button>

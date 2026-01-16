@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     exclude: ['lucide-react'],
+    include: ['react', 'react-dom', 'react-router-dom'],
   },
   build: {
     rollupOptions: {
@@ -25,5 +26,12 @@ export default defineConfig({
       },
     },
     chunkSizeWarningLimit: 500, // Increase limit if needed (default is 500kb)
+    // Enable minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.logs in production
+      },
+    },
   },
 });
