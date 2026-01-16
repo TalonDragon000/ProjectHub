@@ -362,7 +362,7 @@ export default function Landing() {
             </div>
             <div className="text-center md:text-left">
               <h2 className="text-5xl font-bold text-slate-900 mb-6 cursor-default">
-                Turn your Idea into <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent hover:from-blue-500 hover:via-blue-300 hover:to-purple-500 hover:scale-105 hover:shimmer-hover transition-all duration-300">momentum</span>
+                Turn your Idea into <span className="shimmer-hover bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-200 hover:to-blue-500 hover:scale-105  transition-all duration-300">momentum</span>
               </h2>
               <p className="text-xl text-slate-600 mb-8">
                 No pitch decks. No pressure. Just progress.

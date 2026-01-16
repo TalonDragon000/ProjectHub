@@ -36,7 +36,7 @@
   }
   
   .shimmer-hover:hover {
-    animation: shimmer 2s ease-in-out infinite;
+    animation: shimmer 3s ease-in-out infinite;
   }
 }
 
