@@ -110,11 +110,11 @@ export default function Browse() {
       <NavBar />
       <section id="hero" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4x text-center">
-          <h1 className="text-5xl font-bold text-slate-900 mb-6">
+          <h1 className="heading-hero mb-6">
             Discover & Support
             <span className="block bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent">Startup Projects</span>
           </h1>
-          <p className="text-xl text-slate-600 mb-12">
+          <p className="text-lg text-slate-600 mb-12">
             Find amazing projects built by solo creators and freelancers. Leave reviews, provide feedback, and support their work.
           </p>
 
