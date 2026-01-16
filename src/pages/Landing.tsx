@@ -43,7 +43,7 @@ export default function Landing() {
         <div className="max-w-4xl mx-auto text-center">
             <div>
               <div className="badge-info mb-4 inline-block">
-                ✨ Pre-launch
+                ✨ Early Access
               </div>
               <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 cursor-default">
                 Stop building <span className="italic bg-gradient-to-r from-blue-200 via-blue-300 to-purple-200 bg-clip-text text-transparent transition-opacity hover:opacity-50">alone</span>.
@@ -68,12 +68,7 @@ export default function Landing() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/30">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="card-glass">
-              <div className="aspect-square bg-gradient-to-br from-blue-100  to-purple-100 rounded-2xl flex items-center justify-center">
-              <img src="/images/landing/person-with-laptop.png" alt="Hero Illustration" className="w-full h-full object-cover" />
-              </div>
-            </div>
-            <div>
+            <div className="md:order-2">
               <h2 className="text-4xl font-bold text-slate-900 mb-6 cursor-default">
                 Most startups don't fail from bad ideas.<br/>
                 <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent transition-opacity hover:opacity-50">
@@ -85,6 +80,11 @@ export default function Landing() {
               <p className="text-lg text-slate-600">
                 They get too attached. The "Aha!" moment is already wrong - or interesting - so motivation is gone.
               </p>
+            </div>
+            <div className="md:order-1 card-glass">
+              <div className="aspect-square bg-gradient-to-br from-blue-100  to-purple-100 rounded-2xl flex items-center justify-center">
+              <img src="/images/landing/person-with-laptop.png" alt="Hero Illustration" className="w-full h-full object-cover" />
+              </div>
             </div>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function Landing() {
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {/* Step 1 */}
-            <div className="bg-blue-50 rounded-2xl p-8 text-center">
+            <div className="bg-blue-50 border-4 border-blue-100 rounded-2xl p-8 text-center">
               <div className="bg-white rounded-xl p-6 mb-6 inline-block">
                 <Pen className="w-12 h-12 text-blue-600" />
               </div>
@@ -146,7 +146,7 @@ export default function Landing() {
             </div>
 
             {/* Step 2 */}
-            <div className="bg-purple-50 rounded-2xl p-8 text-center">
+            <div className="bg-purple-50 border-4 border-purple-100 rounded-2xl p-8 text-center">
               <div className="bg-white rounded-xl p-6 mb-6 inline-block">
                 <MessageSquare className="w-12 h-12 text-purple-600" />
               </div>
@@ -157,7 +157,7 @@ export default function Landing() {
             </div>
 
             {/* Step 3 */}
-            <div className="bg-green-50 rounded-2xl p-8 text-center">
+            <div className="bg-green-50 border-4 border-green-100 rounded-2xl p-8 text-center">
               <div className="bg-white rounded-xl p-6 mb-6 inline-block">
                 <BarChart3 className="w-12 h-12 text-green-600" />
               </div>
@@ -182,12 +182,7 @@ export default function Landing() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
-              <div className="aspect-square bg-gradient-to-br from-yellow-100 to-orange-100 rounded-2xl flex items-center justify-center">
-                <img src="/images/landing/lightbulb.png" alt="Lightbulb Ideas" className="w-full h-full object-cover" />
-              </div>
-            </div>
-            <div>
+           <div className="md:order-2">
               <h2 className="text-4xl font-bold text-slate-900 mb-6 cursor-default">
                 From messy ideas to <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent hover:from-blue-500 hover:via-blue-600 hover:to-purple-500 hover:scale-105 transition-all duration-300">real projects</span>
               </h2>
@@ -209,6 +204,11 @@ export default function Landing() {
                   <span><strong>private → public</strong> moves are gradual and seamless</span>
                 </li>
               </ul>
+            </div>
+            <div className="md:order-1 bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="aspect-square bg-gradient-to-br from-yellow-100 to-orange-100 rounded-2xl flex items-center justify-center">
+                <img src="/images/landing/lightbulb.png" alt="Lightbulb Ideas" className="w-full h-full object-cover" />
+              </div>
             </div>
           </div>
         </div>
@@ -254,12 +254,7 @@ export default function Landing() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
-              <div className="aspect-square bg-gradient-to-br from-pink-100 to-purple-100 rounded-2xl flex items-center justify-center">
-                <img src="/images/landing/early.png" alt="Early Builders" className="w-fit object-cover" />
-              </div>
-            </div>
-            <div>
+            <div className="md:order-2">
               <h2 className="text-4xl font-bold text-slate-900 mb-6 cursor-default">
                 <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-400 bg-clip-text text-transparent hover:from-blue-600 hover:via-blue-700 hover:to-purple-600 hover:scale-105 transition-all duration-300">Early Builders</span> use ProjectHub to:
               </h2>
@@ -281,6 +276,11 @@ export default function Landing() {
                   <span><strong>Stay accountable</strong> with friends and peers</span>
                 </li>
               </ul>
+            </div>
+            <div className="md:order-1 bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="aspect-square bg-gradient-to-br from-pink-100 to-purple-100 rounded-2xl flex items-center justify-center">
+                <img src="/images/landing/early.png" alt="Early Builders" className="w-fit px-4 object-cover" />
+              </div>
             </div>
           </div>
         </div>
@@ -315,7 +315,7 @@ export default function Landing() {
             </div>
             <div className="bg-white/50 rounded-3xl p-8 backdrop-blur-sm">
               <div className="aspect-square bg-gradient-to-br from-cyan-100 to-blue-100 rounded-2xl flex items-center justify-center">
-                <img src="/images/landing/for-you.png" alt="This is for you" className="w-fit object-cover" />
+                <img src="/images/landing/for-you.png" alt="This is for you" className="w-fit px-4 pb-4 object-cover" />
               </div>
             </div>
           </div>
