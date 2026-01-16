@@ -42,7 +42,7 @@ export default function Footer() {
                   <span>GitHub Repository</span>
                   </a>
                 </div>
-                <div className="flex space-y-2">
+                <div className="flex flex-col space-y-2">
                   <a 
                   href="https://www.x.com/ProjectHub_" 
                   target="_blank"

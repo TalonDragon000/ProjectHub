@@ -22,7 +22,7 @@ export default function Landing() {
     },
     {
       question: "Is ProjectHub free?",
-      answer: "Yes! Creating projects and receiving feedback is completely free. We believe in supporting builders without barriers."
+      answer: "Yes! It will always be free to use ProjectHub. We may add premium features in the future, but we will do our best to keep it affordable."
     },
     {
       question: "Can I keep things private?",
