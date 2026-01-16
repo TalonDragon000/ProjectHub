@@ -19,7 +19,7 @@ export default function Footer() {
           </div>
 
           {/* Quick Links Section */}
-          <div className="flex flex-col items-center md:items-center space-y-4">
+          <div className="flex flex-col items-center space-y-4">
             <h3 className="text-lg font-semibold text-white">Quick Links</h3>
             <nav className="flex flex-col space-y-2 text-white font-semibold text-sm text-center md:text-left">
               <a href="/" className="hover:text-indigo-400 transition-colors">Home</a>
@@ -32,7 +32,7 @@ export default function Footer() {
           <div className="flex flex-col items-center md:items-end space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-white text-center md:text-left mb-4">Connect With Us</h3>
-                <div className="flex space-y-2 mb-2">
+                <div className="flex flex-col space-y-2 mb-2">
                   <a className="flex space-x-2 hover:text-indigo-400 transition-colors group text-sm font-semibold"
                   href="https://github.com/Talondragon000/ProjectHub" 
                   target="_blank"
@@ -42,7 +42,7 @@ export default function Footer() {
                   <span>GitHub Repository</span>
                   </a>
                 </div>
-                <div className="flex flex-col space-y-2">
+                <div className="flex flex-col">
                   <a 
                   href="https://www.x.com/ProjectHub_" 
                   target="_blank"

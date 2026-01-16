@@ -57,9 +57,9 @@ export default function CreatorCard({ creator }: CreatorCardProps) {
           )}
         </div>
 
-        <div className="btn-primary text-sm">
+        <span className="inline-block px-6 py-2 text-sm font-semibold text-indigo-600 border-2 border-indigo-200 rounded-full group-hover:bg-indigo-50 group-hover:border-indigo-300 transition-colors">
           View Profile
-        </div>
+        </span>
       </div>
     </Link>
   );
